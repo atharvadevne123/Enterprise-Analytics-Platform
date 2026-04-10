@@ -1,0 +1,219 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Data Warehouse
+  postgres:
+    image: postgres:15-alpine
+    container_name: analytics-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: analytics_warehouse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/warehouse_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - analytics-network
+
+  # Zookeeper (required by Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: analytics-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - analytics-network
+
+  # Apache Kafka
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: analytics-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - analytics-network
+
+  # Apache Spark Master
+  spark-master:
+    image: bitnami/spark:3.4.1
+    container_name: analytics-spark-master
+    environment:
+      SPARK_MODE: master
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    networks:
+      - analytics-network
+
+  # Apache Spark Worker
+  spark-worker:
+    image: bitnami/spark:3.4.1
+    container_name: analytics-spark-worker
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 4G
+      SPARK_WORKER_CORES: 2
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+    ports:
+      - "8081:8081"
+    networks:
+      - analytics-network
+
+  # Apache Airflow (Scheduler)
+  airflow-scheduler:
+    image: apache/airflow:2.7.0-python3.11
+    container_name: analytics-airflow-scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres/airflow_metadata
+      AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY:-}
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./spark:/opt/airflow/spark_jobs
+    ports:
+      - "8793:8793"
+    networks:
+      - analytics-network
+    command: scheduler
+
+  # Apache Airflow (Webserver)
+  airflow-webserver:
+    image: apache/airflow:2.7.0-python3.11
+    container_name: analytics-airflow-webserver
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-scheduler:
+        condition: service_started
+    environment:
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@postgres/airflow_metadata
+      AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY:-}
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./spark:/opt/airflow/spark_jobs
+    ports:
+      - "8080:8080"
+    networks:
+      - analytics-network
+    command: webserver
+
+  # Analytics API
+  analytics-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.services
+    container_name: analytics-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/analytics_warehouse
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services:/app/services
+      - ./data:/app/data
+    networks:
+      - analytics-network
+    command: python -m uvicorn services.analytics_api:app --host 0.0.0.0 --port 8000 --reload
+
+  # Forecasting Service
+  forecasting-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.services
+    container_name: forecasting-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/analytics_warehouse
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./services:/app/services
+      - ./data:/app/data
+    networks:
+      - analytics-network
+    command: python -m uvicorn services.forecasting_service:app --host 0.0.0.0 --port 8001 --reload
+
+  # Anomaly Detection Service
+  anomaly-detection:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.services
+    container_name: anomaly-detection
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/analytics_warehouse
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./services:/app/services
+      - ./data:/app/data
+    networks:
+      - analytics-network
+    command: python -m uvicorn services.anomaly_detection:app --host 0.0.0.0 --port 8002 --reload
+
+  # Prometheus (Monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: analytics-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - analytics-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+volumes:
+  postgres_data:
+  kafka_data:
+  prometheus_data:
+
+networks:
+  analytics-network:
+    driver: bridge

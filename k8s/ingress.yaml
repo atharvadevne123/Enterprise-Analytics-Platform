@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: analytics-ingress
+  namespace: analytics
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - analytics.example.com
+      secretName: analytics-tls
+  rules:
+    - host: analytics.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: analytics-api
+                port:
+                  number: 8000
+
+          - path: /forecast
+            pathType: Prefix
+            backend:
+              service:
+                name: forecasting-service
+                port:
+                  number: 8001
+
+          - path: /anomalies
+            pathType: Prefix
+            backend:
+              service:
+                name: anomaly-detection
+                port:
+                  number: 8002

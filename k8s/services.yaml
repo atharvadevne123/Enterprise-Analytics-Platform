@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-api
+  namespace: analytics
+  labels:
+    app: analytics-api
+spec:
+  type: ClusterIP
+  selector:
+    app: analytics-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forecasting-service
+  namespace: analytics
+  labels:
+    app: forecasting-service
+spec:
+  type: ClusterIP
+  selector:
+    app: forecasting-service
+  ports:
+    - port: 8001
+      targetPort: 8001
+      protocol: TCP
+      name: http
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: anomaly-detection
+  namespace: analytics
+  labels:
+    app: anomaly-detection
+spec:
+  type: ClusterIP
+  selector:
+    app: anomaly-detection
+  ports:
+    - port: 8002
+      targetPort: 8002
+      protocol: TCP
+      name: http
+
+---
+# LoadBalancer service for external access (optional)
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-api-lb
+  namespace: analytics
+  labels:
+    app: analytics-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: analytics-api
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
