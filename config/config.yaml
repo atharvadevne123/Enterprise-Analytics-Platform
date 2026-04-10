@@ -1,0 +1,148 @@
+# Unified Enterprise Analytics Platform Configuration
+
+# Kafka Configuration
+kafka:
+  broker_urls:
+    - "localhost:9092"
+  topics:
+    ecommerce:
+      orders: "ecommerce.orders"
+      inventory: "ecommerce.inventory"
+      customers: "ecommerce.customers"
+    supply_chain:
+      suppliers: "supply_chain.suppliers"
+      deliveries: "supply_chain.deliveries"
+      purchase_orders: "supply_chain.purchase_orders"
+    financials:
+      transactions: "financials.transactions"
+      budgets: "financials.budgets"
+      actuals: "financials.actuals"
+
+  # Producer/Consumer settings
+  consumer_group: "unified-analytics"
+  auto_offset_reset: "earliest"
+  batch_size: 1000
+  linger_ms: 100
+
+# Database Configuration
+database:
+  # Data Warehouse (Primary)
+  warehouse:
+    type: "postgresql"  # or redshift, snowflake
+    host: "${DB_HOST}"
+    port: 5432
+    database: "analytics_warehouse"
+    user: "${DB_USER}"
+    password: "${DB_PASSWORD}"
+    pool_size: 20
+    max_overflow: 40
+
+  # Metadata Store (Airflow)
+  metadata:
+    type: "postgresql"
+    host: "${DB_HOST}"
+    port: 5432
+    database: "airflow_metadata"
+    user: "${DB_USER}"
+    password: "${DB_PASSWORD}"
+
+# Airflow Configuration
+airflow:
+  home: "/opt/airflow"
+  dags_folder: "./airflow/dags"
+  plugins_folder: "./airflow/plugins"
+  base_log_folder: "/opt/airflow/logs"
+
+  # Schedule intervals
+  schedules:
+    data_validation: "0 0 * * *"  # Daily at midnight
+    etl_batch: "0 2 * * *"        # Daily at 2 AM
+    forecasting: "0 4 * * 0"      # Weekly on Sunday at 4 AM
+    reporting: "0 8 * * *"        # Daily at 8 AM
+
+# Spark Configuration
+spark:
+  master: "spark://localhost:7077"  # or k8s://...
+  app_name: "unified-analytics-etl"
+  executors: 4
+  executor_memory: "4g"
+  executor_cores: 2
+  driver_memory: "2g"
+
+  # S3/Data Lake
+  data_lake_path: "s3://analytics-data-lake"
+
+  # Shuffle settings
+  shuffle_partitions: 200
+  broadcast_threshold: "256m"
+
+# Flink Configuration
+flink:
+  job_manager_host: "localhost"
+  job_manager_port: 8081
+  task_managers: 2
+
+  # Checkpointing
+  checkpoint_interval: 60000  # 1 minute
+  checkpoint_timeout: 600000   # 10 minutes
+  min_pause_between: 30000
+
+  # State backend
+  state_backend: "rocksdb"
+  state_checkpoints_path: "s3://analytics-checkpoints"
+
+# Data Warehouse Schemas
+schemas:
+  warehouse: "public"
+  staging: "staging"
+  analytics: "analytics"
+
+# Microservices
+services:
+  analytics_api:
+    host: "0.0.0.0"
+    port: 8000
+    workers: 4
+
+  forecasting_service:
+    host: "0.0.0.0"
+    port: 8001
+    workers: 2
+
+  anomaly_detection:
+    host: "0.0.0.0"
+    port: 8002
+    workers: 2
+
+# Kubernetes Deployment
+kubernetes:
+  namespace: "analytics"
+  image_registry: "docker.io"
+  image_tag: "v1.0.0"
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+
+# Monitoring & Logging
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+
+  logging:
+    level: "INFO"
+    format: "json"
+    output: "stdout"
+
+# Feature Flags
+features:
+  real_time_analytics: true
+  anomaly_detection: true
+  forecasting: true
+  data_quality_checks: true
+  auto_remediation: false

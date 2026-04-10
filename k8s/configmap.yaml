@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-config
+  namespace: analytics
+data:
+  kafka.brokers: "kafka-cluster:9092"
+  spark.master: "spark://spark-master:7077"
+  spark.executor.memory: "4g"
+  spark.executor.cores: "2"
+  log.level: "INFO"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: analytics-secrets
+  namespace: analytics
+  labels:
+    app: analytics
+type: Opaque
+stringData:
+  database-url: "postgresql://postgres:password@postgres-cluster:5432/analytics_warehouse"
+  kafka-username: "analytics-user"
+  kafka-password: "secure-password"
+  api-key: "your-api-key-here"
