@@ -100,7 +100,7 @@ Real-time statistical anomaly detection across all KPI domains.
 
 ---
 
-### Apache Spark Master — KPI Report Job Completed
+### Apache Spark Master — KPI Report
 1 worker · 8 cores · 2.8 GB memory · `Enterprise Analytics — KPI Report` finished in 18s
 
 ![Spark Master](docs/images/spark_master.png)
