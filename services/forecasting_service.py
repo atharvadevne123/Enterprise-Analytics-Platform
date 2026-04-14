@@ -79,6 +79,23 @@ class CashFlowForecast(BaseModel):
         json_encoders = {Decimal: str}
 
 
+# Root
+@app.get("/")
+def root():
+    return {
+        "service": "forecasting-service",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "endpoints": [
+            "/health",
+            "/forecast/demand/{product_id}",
+            "/forecast/demand/category/{category}",
+            "/forecast/lead-time/{supplier_id}",
+            "/forecast/cash-flow"
+        ]
+    }
+
+
 # Health check
 @app.get("/health")
 def health_check():

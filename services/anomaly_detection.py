@@ -51,6 +51,25 @@ class AnomalyAlert(BaseModel):
         json_encoders = {Decimal: str}
 
 
+# Root
+@app.get("/")
+def root():
+    return {
+        "service": "anomaly-detection",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "endpoints": [
+            "/health",
+            "/detect/ecommerce/revenue",
+            "/detect/ecommerce/conversion-rate",
+            "/detect/supply-chain/on-time-delivery",
+            "/detect/financial/budget-variance",
+            "/alerts/active",
+            "/alerts/{alert_id}/acknowledge"
+        ]
+    }
+
+
 # Health check
 @app.get("/health")
 def health_check():
