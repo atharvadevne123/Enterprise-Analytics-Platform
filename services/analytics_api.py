@@ -392,13 +392,18 @@ def get_unified_kpis(
 
 @app.get("/kpis/summary")
 def get_kpi_summary():
-    """Get current KPI summary"""
+    """Get current KPI summary — uses most recent date that has data"""
     try:
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=1)
-
         with engine.connect() as conn:
-            # Get latest metrics
+            # Find most recent date with e-commerce data
+            latest = conn.execute(
+                text("""
+                SELECT date FROM analytics.ecommerce_daily_metrics
+                WHERE total_orders > 0 ORDER BY date DESC LIMIT 1
+                """)
+            ).fetchone()
+            end_date = latest[0] if latest else datetime.now().date()
+
             ecom = conn.execute(
                 text("""
                 SELECT total_revenue, average_order_value, conversion_rate
