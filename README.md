@@ -58,28 +58,58 @@ A unified, production-grade analytics platform combining E-Commerce, Supply Chai
 
 ## Screenshots
 
-### Analytics API — Unified KPI Endpoints
+### Analytics API — 9 Endpoints via Swagger UI
+Unified KPI queries across e-commerce, supply chain, and financial domains.
+
 ![Analytics API](docs/images/analytics_api.png)
 
-### Live KPI Summary — December 31 2025
-![KPI Summary](docs/images/kpi_summary.png)
+---
 
-### E-Commerce Metrics — Daily Data
-![E-Commerce Metrics](docs/images/ecommerce_metrics.png)
+### Forecasting Service — Demand, Lead Time & Cash Flow
+ARIMA and linear regression models exposed as REST endpoints.
 
-### Forecasting Service — Demand & Cash Flow
 ![Forecasting Service](docs/images/forecasting_service.png)
 
-### Anomaly Detection Service
+---
+
+### Anomaly Detection Service — Z-Score Alerts
+Real-time statistical anomaly detection across all KPI domains.
+
 ![Anomaly Detection](docs/images/anomaly_detection.png)
 
-### Apache Airflow — DAG Orchestration
+---
+
+### Live KPI Summary Response — December 31, 2025
+`GET /kpis/summary` — Revenue $7.19M · AOV $11,959 · On-time 86.33% · Lead time 24.98 days
+
+![KPI Summary](docs/images/kpi_summary.png)
+
+---
+
+### E-Commerce Daily Metrics — December 2025
+`GET /ecommerce/metrics/2025-12-25/2025-12-31` — ~620 orders/day · $7–8M revenue/day · 10% conversion
+
+![E-Commerce Metrics](docs/images/ecommerce_metrics.png)
+
+---
+
+### Apache Airflow v2.8.0 — DAG Orchestration
+`data_validation` DAG active · scheduler running · auto-refresh enabled
+
 ![Airflow](docs/images/airflow.png)
 
+---
+
 ### Apache Spark Master — KPI Report Job Completed
+1 worker · 8 cores · 2.8 GB memory · `Enterprise Analytics — KPI Report` finished in 18s
+
 ![Spark Master](docs/images/spark_master.png)
 
-### Prometheus — Service Monitoring
+---
+
+### Prometheus — 4 Services Scraped
+Targets: `anomaly-detection:8002` · `forecasting-service:8001` · `analytics-api:8000` · `prometheus:9090`
+
 ![Prometheus](docs/images/prometheus.png)
 
 ---
