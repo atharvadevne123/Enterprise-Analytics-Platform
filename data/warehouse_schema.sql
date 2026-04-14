@@ -205,6 +205,7 @@ CREATE TABLE IF NOT EXISTS public.fact_budget_actuals (
     budget_id BIGINT PRIMARY KEY,
     gl_account_id VARCHAR(20) NOT NULL REFERENCES public.dim_gl_accounts(gl_account_id),
     date_id INT NOT NULL REFERENCES public.dim_dates(date_id),
+    date DATE,
 
     budget_amount DECIMAL(15, 2),
     actual_amount DECIMAL(15, 2),
@@ -221,6 +222,7 @@ CREATE TABLE IF NOT EXISTS public.fact_budget_actuals (
     CONSTRAINT fk_budget_gl FOREIGN KEY (gl_account_id) REFERENCES public.dim_gl_accounts(gl_account_id),
     CONSTRAINT fk_budget_date FOREIGN KEY (date_id) REFERENCES public.dim_dates(date_id)
 );
+CREATE INDEX IF NOT EXISTS idx_budget_actuals_date ON public.fact_budget_actuals(date);
 
 -- ============================================================================
 -- ANALYTICS MARTS (Aggregated Views)
@@ -229,6 +231,7 @@ CREATE TABLE IF NOT EXISTS public.fact_budget_actuals (
 -- E-Commerce Analytics Mart
 CREATE TABLE IF NOT EXISTS analytics.ecommerce_daily_metrics (
     date_id INT PRIMARY KEY,
+    date DATE,
     total_orders INT DEFAULT 0,
     total_customers INT DEFAULT 0,
     total_revenue DECIMAL(15, 2) DEFAULT 0,
@@ -241,10 +244,12 @@ CREATE TABLE IF NOT EXISTS analytics.ecommerce_daily_metrics (
     dw_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_ecom_date FOREIGN KEY (date_id) REFERENCES public.dim_dates(date_id)
 );
+CREATE INDEX IF NOT EXISTS idx_ecom_metrics_date ON analytics.ecommerce_daily_metrics(date);
 
 -- Supply Chain Analytics Mart
 CREATE TABLE IF NOT EXISTS analytics.supply_chain_daily_metrics (
     date_id INT PRIMARY KEY,
+    date DATE,
     total_deliveries INT DEFAULT 0,
     on_time_deliveries INT DEFAULT 0,
     on_time_delivery_pct DECIMAL(5, 2) DEFAULT 0,
@@ -254,10 +259,12 @@ CREATE TABLE IF NOT EXISTS analytics.supply_chain_daily_metrics (
     dw_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_sc_date FOREIGN KEY (date_id) REFERENCES public.dim_dates(date_id)
 );
+CREATE INDEX IF NOT EXISTS idx_sc_metrics_date ON analytics.supply_chain_daily_metrics(date);
 
 -- Financial Analytics Mart
 CREATE TABLE IF NOT EXISTS analytics.financial_daily_metrics (
     date_id INT PRIMARY KEY,
+    date DATE,
     total_revenue DECIMAL(15, 2) DEFAULT 0,
     total_expense DECIMAL(15, 2) DEFAULT 0,
     net_income DECIMAL(15, 2) DEFAULT 0,
@@ -268,10 +275,12 @@ CREATE TABLE IF NOT EXISTS analytics.financial_daily_metrics (
     dw_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_fin_date FOREIGN KEY (date_id) REFERENCES public.dim_dates(date_id)
 );
+CREATE INDEX IF NOT EXISTS idx_fin_metrics_date ON analytics.financial_daily_metrics(date);
 
 -- Unified KPI Mart
 CREATE TABLE IF NOT EXISTS analytics.unified_kpi_metrics (
     date_id INT PRIMARY KEY,
+    date DATE,
     revenue_per_supplier DECIMAL(15, 2) DEFAULT 0,
     profit_per_product DECIMAL(15, 2) DEFAULT 0,
     order_to_cash_cycle_days INT DEFAULT 0,
@@ -280,6 +289,7 @@ CREATE TABLE IF NOT EXISTS analytics.unified_kpi_metrics (
     dw_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_kpi_date FOREIGN KEY (date_id) REFERENCES public.dim_dates(date_id)
 );
+CREATE INDEX IF NOT EXISTS idx_kpi_metrics_date ON analytics.unified_kpi_metrics(date);
 
 -- ============================================================================
 -- STAGING TABLES (for CDC and temporary data)

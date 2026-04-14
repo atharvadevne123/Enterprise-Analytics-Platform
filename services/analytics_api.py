@@ -90,6 +90,27 @@ class UnifiedKPIs(BaseModel):
         json_encoders = {Decimal: str}
 
 
+# Root
+@app.get("/")
+def root():
+    return {
+        "service": "analytics-api",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "endpoints": [
+            "/health",
+            "/ecommerce/metrics/{start_date}/{end_date}",
+            "/ecommerce/conversion-rate",
+            "/supply-chain/metrics/{start_date}/{end_date}",
+            "/supply-chain/supplier/{supplier_id}/performance",
+            "/financial/metrics/{start_date}/{end_date}",
+            "/financial/budget-vs-actual/{gl_account_id}",
+            "/kpis/unified/{start_date}/{end_date}",
+            "/kpis/summary"
+        ]
+    }
+
+
 # Health check
 @app.get("/health")
 def health_check():
@@ -128,7 +149,7 @@ def get_ecommerce_metrics(
                 {"start_date": start_date, "end_date": end_date}
             )
 
-            metrics = [dict(row) for row in result]
+            metrics = [dict(row._mapping) for row in result]
             return metrics
 
     except Exception as e:
@@ -202,7 +223,7 @@ def get_supply_chain_metrics(
                 {"start_date": start_date, "end_date": end_date}
             )
 
-            metrics = [dict(row) for row in result]
+            metrics = [dict(row._mapping) for row in result]
             return metrics
 
     except Exception as e:
@@ -277,7 +298,7 @@ def get_financial_metrics(
                 {"start_date": start_date, "end_date": end_date}
             )
 
-            metrics = [dict(row) for row in result]
+            metrics = [dict(row._mapping) for row in result]
             return metrics
 
     except Exception as e:
@@ -321,7 +342,7 @@ def get_budget_vs_actual(
                 }
             )
 
-            data = [dict(row) for row in result]
+            data = [dict(row._mapping) for row in result]
             return {
                 "gl_account_id": gl_account_id,
                 "period": {"start": start_date, "end": end_date},
@@ -361,7 +382,7 @@ def get_unified_kpis(
                 {"start_date": start_date, "end_date": end_date}
             )
 
-            metrics = [dict(row) for row in result]
+            metrics = [dict(row._mapping) for row in result]
             return metrics
 
     except Exception as e:

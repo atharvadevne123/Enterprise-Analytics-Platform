@@ -1,0 +1,29 @@
+# Minimal requirements for analytics microservices
+# (excludes pyspark, airflow, great-expectations - those are handled separately)
+
+# Core Data Processing
+pandas==2.0.3
+numpy==1.24.3
+pyarrow==14.0.1
+
+# Database
+psycopg2-binary==2.9.9
+sqlalchemy==1.4.50
+
+# API & Web
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.4.2
+httpx==0.25.1
+
+# Forecasting & Analytics
+scikit-learn==1.3.2
+statsmodels==0.14.0
+scipy
+
+# Monitoring & Logging
+python-json-logger==2.0.7
+prometheus-client==0.18.0
+
+# Utilities
+python-dotenv==1.0.0
