@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "enterprise-analytics-platform"
+version = "1.0.0"
+description = "Enterprise-grade analytics and reporting platform"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "atharvadevne123", email = "devneatharva@gmail.com"}]
+
+[tool.setuptools.packages.find]
+where = ["."]
