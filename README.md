@@ -1,3 +1,5 @@
+![Docker](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/docker-publish.yml/badge.svg) ![Python Package](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/python-publish.yml/badge.svg) ![Bump Version](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/bump-version.yml/badge.svg)
+
 # Enterprise Analytics Platform
 
 A unified, production-grade analytics platform combining E-Commerce, Supply Chain, and Financial Intelligence — built on Apache Spark, Airflow, Kafka, PostgreSQL, and FastAPI microservices, all orchestrated with Docker Compose.
