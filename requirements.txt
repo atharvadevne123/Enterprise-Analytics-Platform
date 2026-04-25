@@ -34,7 +34,7 @@ prophet==1.1.5
 
 # Monitoring & Logging
 python-json-logger==2.0.7
-prometheus-client==0.18.0
+prometheus-client==0.25.0
 
 # Development
 pytest==7.4.3
