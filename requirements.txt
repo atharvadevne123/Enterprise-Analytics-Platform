@@ -1,7 +1,7 @@
 # Core Data Processing
 pandas==2.0.3
 numpy==1.24.3
-pyspark==3.5.0
+pyspark==4.0.2
 pyarrow==14.0.1
 
 # Streaming & Messaging
