@@ -3,16 +3,17 @@ Airflow DAG for Batch ETL Processing
 Daily aggregation and dimensional modeling of data
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta
 
+from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.spark.operators.spark_submit import SparkSubmitOperator
 from airflow.utils.task_group import TaskGroup
-
-from airflow import DAG
 
 logger = logging.getLogger(__name__)
 
