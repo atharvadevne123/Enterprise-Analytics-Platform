@@ -128,7 +128,6 @@ def calculate_unified_kpis(spark):
     print("Calculating unified KPIs...")
 
     # Read all relevant data
-    orders = spark.read.jdbc(db_url, "public.fact_orders", db_properties)
     deliveries = spark.read.jdbc(db_url, "public.fact_deliveries", db_properties)
 
     # Order-to-cash cycle (simple: average delivery days)

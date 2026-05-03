@@ -3,15 +3,15 @@ Airflow DAG for Data Validation and Quality Checks
 Runs daily to validate incoming data before ETL processing
 """
 
-from datetime import datetime, timedelta
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.operators.bash import BashOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.utils.task_group import TaskGroup
-from airflow.models import Variable
-
 import logging
+from datetime import datetime, timedelta
+
+from airflow.models import Variable
+from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
+from airflow.utils.task_group import TaskGroup
+
+from airflow import DAG
 
 logger = logging.getLogger(__name__)
 
@@ -126,8 +126,9 @@ def validate_transactions_table():
 
 def record_validation_status(status: str, details: str):
     """Record validation status in database"""
-    from sqlalchemy import create_engine, text
     from datetime import datetime
+
+    from sqlalchemy import create_engine, text
 
     db_url = Variable.get("DB_URL")
     engine = create_engine(db_url)
