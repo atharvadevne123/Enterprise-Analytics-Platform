@@ -10,7 +10,14 @@ from decimal import Decimal
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class BaseAnalyticsModel(BaseModel):
+    """Shared base for all analytics models — serializes Decimal as str."""
+
+    model_config = ConfigDict(json_encoders={Decimal: str})
+
 
 # ============================================================================
 # ENUMS
@@ -58,7 +65,7 @@ class CustomerSegment(str, Enum):
 # E-COMMERCE MODELS
 # ============================================================================
 
-class Product(BaseModel):
+class Product(BaseAnalyticsModel):
     product_id: int
     product_name: str
     category: str
@@ -73,11 +80,7 @@ class Product(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class Customer(BaseModel):
+class Customer(BaseAnalyticsModel):
     customer_id: int
     customer_name: str
     email: Optional[str] = None
@@ -89,11 +92,7 @@ class Customer(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class OrderEvent(BaseModel):
+class OrderEvent(BaseAnalyticsModel):
     """Order event from e-commerce system (Kafka topic: ecommerce.orders)"""
     order_id: int
     customer_id: int
@@ -113,11 +112,7 @@ class OrderEvent(BaseModel):
     shipping_status: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class InventoryEvent(BaseModel):
+class InventoryEvent(BaseAnalyticsModel):
     """Inventory update event (Kafka topic: ecommerce.inventory)"""
     product_id: int
     stock_level: int
@@ -127,15 +122,11 @@ class InventoryEvent(BaseModel):
     warehouse_id: Optional[int] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
 # ============================================================================
 # SUPPLY CHAIN MODELS
 # ============================================================================
 
-class Supplier(BaseModel):
+class Supplier(BaseAnalyticsModel):
     supplier_id: int
     supplier_name: str
     country: str
@@ -150,11 +141,7 @@ class Supplier(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class PurchaseOrderEvent(BaseModel):
+class PurchaseOrderEvent(BaseAnalyticsModel):
     """Purchase order event (Kafka topic: supply_chain.purchase_orders)"""
     po_id: int
     supplier_id: int
@@ -167,11 +154,7 @@ class PurchaseOrderEvent(BaseModel):
     po_status: str  # Draft, Sent, Confirmed, Received, Cancelled
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class DeliveryEvent(BaseModel):
+class DeliveryEvent(BaseAnalyticsModel):
     """Delivery event from suppliers (Kafka topic: supply_chain.deliveries)"""
     delivery_id: int
     po_id: int
@@ -191,15 +174,11 @@ class DeliveryEvent(BaseModel):
     delivery_status: DeliveryStatus = DeliveryStatus.PENDING
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
 # ============================================================================
 # FINANCIAL MODELS
 # ============================================================================
 
-class GLAccount(BaseModel):
+class GLAccount(BaseAnalyticsModel):
     gl_account_id: str
     account_name: str
     account_type: str  # Asset, Liability, Equity, Revenue, Expense
@@ -211,7 +190,7 @@ class GLAccount(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
-class TransactionEvent(BaseModel):
+class TransactionEvent(BaseAnalyticsModel):
     """Financial transaction event (Kafka topic: financials.transactions)"""
     transaction_id: int
     gl_account_id: str
@@ -227,11 +206,7 @@ class TransactionEvent(BaseModel):
     transaction_date: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class BudgetEvent(BaseModel):
+class BudgetEvent(BaseAnalyticsModel):
     """Budget event (Kafka topic: financials.budgets)"""
     budget_id: int
     gl_account_id: str
@@ -243,11 +218,7 @@ class BudgetEvent(BaseModel):
     budget_quarter: Optional[int] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class ActualEvent(BaseModel):
+class ActualEvent(BaseAnalyticsModel):
     """Actual financial event (Kafka topic: financials.actuals)"""
     actual_id: int
     gl_account_id: str
@@ -255,15 +226,11 @@ class ActualEvent(BaseModel):
     transaction_date: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
 # ============================================================================
 # KPI AND METRICS MODELS
 # ============================================================================
 
-class ECommerceMetrics(BaseModel):
+class ECommerceMetrics(BaseAnalyticsModel):
     """Daily e-commerce KPI metrics"""
     date: datetime
     total_orders: int
@@ -278,11 +245,7 @@ class ECommerceMetrics(BaseModel):
     returned_orders: int = 0
     refunded_amount: Decimal = Decimal("0.00")
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class SupplyChainMetrics(BaseModel):
+class SupplyChainMetrics(BaseAnalyticsModel):
     """Daily supply chain KPI metrics"""
     date: datetime
     total_deliveries: int
@@ -294,11 +257,7 @@ class SupplyChainMetrics(BaseModel):
     cancelled_orders: int = 0
     delayed_deliveries: int = 0
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class FinancialMetrics(BaseModel):
+class FinancialMetrics(BaseAnalyticsModel):
     """Daily financial KPI metrics"""
     date: datetime
     total_revenue: Decimal
@@ -311,11 +270,7 @@ class FinancialMetrics(BaseModel):
     accounts_receivable: Decimal = Decimal("0.00")
     accounts_payable: Decimal = Decimal("0.00")
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class UnifiedKPIMetrics(BaseModel):
+class UnifiedKPIMetrics(BaseAnalyticsModel):
     """Unified cross-domain KPI metrics"""
     date: datetime
     revenue_per_supplier: Decimal
@@ -326,15 +281,11 @@ class UnifiedKPIMetrics(BaseModel):
     return_rate_pct: Decimal = Decimal("0.00")
     supplier_performance_score: Decimal = Decimal("0.00")
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
 # ============================================================================
 # ANOMALY DETECTION MODELS
 # ============================================================================
 
-class AnomalyAlert(BaseModel):
+class AnomalyAlert(BaseAnalyticsModel):
     """Anomaly detected in metrics"""
     alert_id: str
     severity: str  # CRITICAL, WARNING, INFO
@@ -349,15 +300,11 @@ class AnomalyAlert(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     resolved: bool = False
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
 # ============================================================================
 # FORECAST MODELS
 # ============================================================================
 
-class DemandForecast(BaseModel):
+class DemandForecast(BaseAnalyticsModel):
     """Product demand forecast"""
     forecast_id: str
     product_id: int
@@ -368,11 +315,7 @@ class DemandForecast(BaseModel):
     model_version: str
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class LeadTimeForecast(BaseModel):
+class LeadTimeForecast(BaseAnalyticsModel):
     """Supplier lead time forecast"""
     forecast_id: str
     supplier_id: int
@@ -382,11 +325,7 @@ class LeadTimeForecast(BaseModel):
     model_version: str
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {Decimal: str}
-
-
-class CashFlowForecast(BaseModel):
+class CashFlowForecast(BaseAnalyticsModel):
     """Financial cash flow forecast"""
     forecast_id: str
     forecast_date: datetime
@@ -397,6 +336,3 @@ class CashFlowForecast(BaseModel):
     confidence_level: Decimal
     model_version: str
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-
-    class Config:
-        json_encoders = {Decimal: str}
