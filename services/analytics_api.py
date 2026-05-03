@@ -22,8 +22,16 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="Unified Analytics API",
-    description="Real-time analytics and KPI queries",
-    version="1.0.0"
+    description=(
+        "Real-time analytics and KPI queries for E-Commerce, Supply Chain, "
+        "and Financial Intelligence across the enterprise data warehouse."
+    ),
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    contact={"name": "Analytics Team", "email": "devneatharva@gmail.com"},
+    license_info={"name": "MIT"},
 )
 
 # Database connection
