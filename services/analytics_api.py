@@ -122,6 +122,23 @@ def health_check() -> Dict[str, str]:
     return {"status": "healthy", "service": "analytics-api"}
 
 
+@app.get("/version")
+def version() -> Dict[str, str]:
+    """Return service version information."""
+    return {"service": "analytics-api", "version": "1.0.0", "python": "3.10+"}
+
+
+@app.get("/metrics")
+def metrics() -> Dict[str, Any]:
+    """Return basic service metrics."""
+    return {
+        "service": "analytics-api",
+        "status": "running",
+        "endpoints_available": 8,
+        "db_pool_size": engine.pool.size(),
+    }
+
+
 # E-Commerce Endpoints
 
 @app.get("/ecommerce/metrics/{start_date}/{end_date}",
