@@ -75,8 +75,25 @@ def root() -> Dict[str, Any]:
 # Health check
 @app.get("/health")
 def health_check() -> Dict[str, str]:
-    """Health check endpoint"""
+    """Return service health status."""
     return {"status": "healthy", "service": "anomaly-detection"}
+
+
+@app.get("/version")
+def version() -> Dict[str, str]:
+    """Return service version information."""
+    return {"service": "anomaly-detection", "version": "1.0.0", "python": "3.10+"}
+
+
+@app.get("/metrics")
+def metrics() -> Dict[str, Any]:
+    """Return basic service metrics."""
+    return {
+        "service": "anomaly-detection",
+        "status": "running",
+        "detection_methods": ["z-score", "iqr"],
+        "db_pool_size": engine.pool.size(),
+    }
 
 
 def detect_statistical_anomaly(
