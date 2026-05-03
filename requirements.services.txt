@@ -22,7 +22,7 @@ statsmodels==0.14.0
 scipy
 
 # Monitoring & Logging
-python-json-logger==2.0.7
+python-json-logger==4.0.0
 prometheus-client==0.25.0
 
 # Utilities
