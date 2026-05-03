@@ -404,9 +404,9 @@ def detect_budget_variance_anomaly(
 @app.get("/alerts/active")
 def get_active_alerts(
     severity: Optional[str] = None,
-    domain: Optional[str] = None
-):
-    """Get all active anomaly alerts"""
+    domain: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Return all active anomaly alerts, optionally filtered by severity and domain."""
     try:
         # In production, this would query from an alerts table
         # For now, return mock structure
