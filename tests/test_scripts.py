@@ -80,3 +80,66 @@ class TestValidateEnvScript:
         results = mod.check_env_vars(["TEST_VAR_ABC123"])
         assert results[0] == ("TEST_VAR_ABC123", True)
         del os.environ["TEST_VAR_ABC123"]
+
+
+class TestGenerateSampleDataScript:
+    def test_generate_sample_data_module_importable(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "generate_sample_data", "scripts/generate_sample_data.py"
+        )
+        assert spec is not None
+
+    def test_generate_sample_data_has_main(self):
+        with open("scripts/generate_sample_data.py") as f:
+            content = f.read()
+        assert "def main" in content
+        assert "write_ecommerce" in content
+        assert "write_supply_chain" in content
+        assert "write_financial" in content
+
+    def test_generate_sample_data_writes_csvs(self, tmp_path):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "generate_sample_data", "scripts/generate_sample_data.py"
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        from pathlib import Path
+        out = Path(tmp_path)
+        mod.write_ecommerce(out, 5)
+        mod.write_supply_chain(out, 5)
+        mod.write_financial(out, 5)
+        assert (out / "ecommerce_daily_metrics.csv").exists()
+        assert (out / "supply_chain_daily_metrics.csv").exists()
+        assert (out / "financial_daily_metrics.csv").exists()
+
+    def test_generate_sample_data_row_count(self, tmp_path):
+        import csv as csv_module
+        import importlib.util
+        from pathlib import Path
+        spec = importlib.util.spec_from_file_location(
+            "generate_sample_data", "scripts/generate_sample_data.py"
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        out = Path(tmp_path)
+        mod.write_ecommerce(out, 10)
+        with (out / "ecommerce_daily_metrics.csv").open() as f:
+            rows = list(csv_module.DictReader(f))
+        assert len(rows) == 10
+
+    @pytest.mark.parametrize("rows", [1, 5, 30])
+    def test_generate_sample_data_parametrized_rows(self, tmp_path, rows):
+        import importlib.util
+        from pathlib import Path
+        spec = importlib.util.spec_from_file_location(
+            "generate_sample_data", "scripts/generate_sample_data.py"
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        out = Path(tmp_path)
+        mod.write_financial(out, rows)
+        import csv as csv_module
+        with (out / "financial_daily_metrics.csv").open() as f:
+            assert len(list(csv_module.DictReader(f))) == rows
