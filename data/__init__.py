@@ -1,28 +1,61 @@
-"""Data models and schema for unified analytics platform"""
+"""Data models and schema for the Unified Enterprise Analytics Platform.
+
+Exposes all Pydantic event models, dimension models, KPI models, anomaly
+alert models, and forecast models used across microservices.
+"""
+
+from __future__ import annotations
 
 from .models import (
-    # Enums
-    OrderStatus, PaymentStatus, DeliveryStatus, TransactionType, CustomerSegment,
-    # E-Commerce
-    Product, Customer, OrderEvent, InventoryEvent,
-    # Supply Chain
-    Supplier, PurchaseOrderEvent, DeliveryEvent,
-    # Financial
-    GLAccount, TransactionEvent, BudgetEvent, ActualEvent,
-    # KPIs
-    ECommerceMetrics, SupplyChainMetrics, FinancialMetrics, UnifiedKPIMetrics,
-    # Anomalies
+    ActualEvent,
     AnomalyAlert,
-    # Forecasts
-    DemandForecast, LeadTimeForecast, CashFlowForecast
+    BudgetEvent,
+    CashFlowForecast,
+    Customer,
+    CustomerSegment,
+    DeliveryEvent,
+    DeliveryStatus,
+    DemandForecast,
+    ECommerceMetrics,
+    FinancialMetrics,
+    GLAccount,
+    InventoryEvent,
+    LeadTimeForecast,
+    OrderEvent,
+    OrderStatus,
+    PaymentStatus,
+    Product,
+    PurchaseOrderEvent,
+    Supplier,
+    SupplyChainMetrics,
+    TransactionEvent,
+    TransactionType,
+    UnifiedKPIMetrics,
 )
 
 __all__ = [
-    'OrderStatus', 'PaymentStatus', 'DeliveryStatus', 'TransactionType', 'CustomerSegment',
-    'Product', 'Customer', 'OrderEvent', 'InventoryEvent',
-    'Supplier', 'PurchaseOrderEvent', 'DeliveryEvent',
-    'GLAccount', 'TransactionEvent', 'BudgetEvent', 'ActualEvent',
-    'ECommerceMetrics', 'SupplyChainMetrics', 'FinancialMetrics', 'UnifiedKPIMetrics',
-    'AnomalyAlert',
-    'DemandForecast', 'LeadTimeForecast', 'CashFlowForecast'
+    "ActualEvent",
+    "AnomalyAlert",
+    "BudgetEvent",
+    "CashFlowForecast",
+    "Customer",
+    "CustomerSegment",
+    "DeliveryEvent",
+    "DeliveryStatus",
+    "DemandForecast",
+    "ECommerceMetrics",
+    "FinancialMetrics",
+    "GLAccount",
+    "InventoryEvent",
+    "LeadTimeForecast",
+    "OrderEvent",
+    "OrderStatus",
+    "PaymentStatus",
+    "Product",
+    "PurchaseOrderEvent",
+    "Supplier",
+    "SupplyChainMetrics",
+    "TransactionEvent",
+    "TransactionType",
+    "UnifiedKPIMetrics",
 ]
