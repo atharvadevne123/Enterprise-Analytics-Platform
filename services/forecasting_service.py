@@ -25,8 +25,15 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="Forecasting Service",
-    description="Demand, lead time, and cash flow forecasting",
-    version="1.0.0"
+    description=(
+        "ML-powered demand forecasting, lead time prediction, and cash flow "
+        "projections for E-Commerce, Supply Chain, and Financial planning."
+    ),
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    contact={"name": "Analytics Team", "email": "devneatharva@gmail.com"},
+    license_info={"name": "MIT"},
 )
 
 # Database connection
