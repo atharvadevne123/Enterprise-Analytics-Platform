@@ -203,9 +203,9 @@ def forecast_demand(
 @app.get("/forecast/demand/category/{category}")
 def forecast_category_demand(
     category: str,
-    horizon_days: int = Query(30, ge=1, le=365)
-):
-    """Forecast demand for entire product category"""
+    horizon_days: int = Query(30, ge=1, le=365),
+) -> Dict[str, Any]:
+    """Forecast demand for an entire product category using ARIMA with linear fallback."""
     try:
         with engine.connect() as conn:
             # Get category-level historical data
@@ -316,9 +316,9 @@ def forecast_supplier_lead_time(supplier_id: int) -> Dict[str, Any]:
 
 @app.get("/forecast/cash-flow")
 def forecast_cash_flow(
-    horizon_days: int = Query(30, ge=1, le=365)
-):
-    """Forecast cash flow for next N days"""
+    horizon_days: int = Query(30, ge=1, le=365),
+) -> Dict[str, Any]:
+    """Forecast net cash flow for the next N days using linear regression on historical transactions."""
     try:
         with engine.connect() as conn:
             # Get historical daily cash flows (inflows from orders, outflows from expenses)
