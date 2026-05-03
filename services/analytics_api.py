@@ -3,14 +3,17 @@ Analytics API Microservice
 FastAPI service for querying KPI metrics and analytics
 """
 
+from __future__ import annotations
+
+import logging
+import os
+from datetime import date, datetime, timedelta
+from decimal import Decimal
+from typing import Any, Dict, List, Optional
+
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
-from datetime import datetime, date, timedelta
-from typing import List, Optional
-from decimal import Decimal
-import logging
 from sqlalchemy import create_engine, text
-import os
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -92,7 +95,8 @@ class UnifiedKPIs(BaseModel):
 
 # Root
 @app.get("/")
-def root():
+def root() -> Dict[str, Any]:
+    """Return service metadata and available endpoint list."""
     return {
         "service": "analytics-api",
         "version": "1.0.0",
@@ -113,8 +117,8 @@ def root():
 
 # Health check
 @app.get("/health")
-def health_check():
-    """Health check endpoint"""
+def health_check() -> Dict[str, str]:
+    """Return service health status."""
     return {"status": "healthy", "service": "analytics-api"}
 
 
@@ -125,8 +129,8 @@ def health_check():
 def get_ecommerce_metrics(
     start_date: date,
     end_date: date,
-    granularity: str = Query("daily", regex="^(daily|weekly|monthly)$")
-):
+    granularity: str = Query("daily", regex="^(daily|weekly|monthly)$"),
+) -> List[Dict[str, Any]]:
     """Get e-commerce KPI metrics for date range"""
     try:
         with engine.connect() as conn:
@@ -159,8 +163,8 @@ def get_ecommerce_metrics(
 
 @app.get("/ecommerce/conversion-rate")
 def get_conversion_rate(
-    days: int = Query(30, ge=1, le=365)
-):
+    days: int = Query(30, ge=1, le=365),
+) -> Dict[str, Any]:
     """Get conversion rate for last N days"""
     try:
         end_date = datetime.now().date()
@@ -201,8 +205,8 @@ def get_conversion_rate(
          response_model=List[SupplyChainMetrics])
 def get_supply_chain_metrics(
     start_date: date,
-    end_date: date
-):
+    end_date: date,
+) -> List[Dict[str, Any]]:
     """Get supply chain KPI metrics"""
     try:
         with engine.connect() as conn:
@@ -232,7 +236,7 @@ def get_supply_chain_metrics(
 
 
 @app.get("/supply-chain/supplier/{supplier_id}/performance")
-def get_supplier_performance(supplier_id: int):
+def get_supplier_performance(supplier_id: int) -> Dict[str, Any]:
     """Get supplier performance metrics"""
     try:
         with engine.connect() as conn:
@@ -276,8 +280,8 @@ def get_supplier_performance(supplier_id: int):
          response_model=List[FinancialMetrics])
 def get_financial_metrics(
     start_date: date,
-    end_date: date
-):
+    end_date: date,
+) -> List[Dict[str, Any]]:
     """Get financial KPI metrics"""
     try:
         with engine.connect() as conn:
@@ -310,8 +314,8 @@ def get_financial_metrics(
 def get_budget_vs_actual(
     gl_account_id: str,
     start_date: Optional[date] = None,
-    end_date: Optional[date] = None
-):
+    end_date: Optional[date] = None,
+) -> Dict[str, Any]:
     """Get budget vs actual comparison"""
     if not start_date:
         start_date = (datetime.now() - timedelta(days=30)).date()
@@ -360,8 +364,8 @@ def get_budget_vs_actual(
          response_model=List[UnifiedKPIs])
 def get_unified_kpis(
     start_date: date,
-    end_date: date
-):
+    end_date: date,
+) -> List[Dict[str, Any]]:
     """Get unified cross-domain KPIs"""
     try:
         with engine.connect() as conn:
@@ -391,7 +395,7 @@ def get_unified_kpis(
 
 
 @app.get("/kpis/summary")
-def get_kpi_summary():
+def get_kpi_summary() -> Dict[str, Any]:
     """Get current KPI summary — uses most recent date that has data"""
     try:
         with engine.connect() as conn:
