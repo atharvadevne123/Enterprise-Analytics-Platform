@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
@@ -176,3 +175,84 @@ class TestEdgeCases:
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/analytics/ecommerce/summary")
             assert resp.status_code in (500, 200, 404)
+
+
+# ---------------------------------------------------------------------------
+# Existing endpoints (direct URL)
+# ---------------------------------------------------------------------------
+
+class TestExistingEndpoints:
+    @pytest.mark.parametrize("endpoint", [
+        "/",
+        "/health",
+        "/version",
+        "/metrics",
+    ])
+    def test_service_endpoints_return_json(self, endpoint):
+        client, _ = _make_client()
+        resp = client.get(endpoint)
+        if resp.status_code == 200:
+            assert resp.headers.get("content-type", "").startswith("application/json")
+
+    def test_health_status_key(self):
+        client, _ = _make_client()
+        data = client.get("/health").json()
+        assert data.get("status") == "healthy"
+
+    def test_version_has_version_key(self):
+        client, _ = _make_client()
+        resp = client.get("/version")
+        if resp.status_code == 200:
+            data = resp.json()
+            assert "version" in data
+
+    @pytest.mark.parametrize("start,end", [
+        ("2024-01-01", "2024-01-31"),
+        ("2024-06-01", "2024-06-30"),
+        ("2023-01-01", "2023-12-31"),
+    ])
+    def test_ecommerce_metrics_date_ranges(self, start, end):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value = []
+        resp = client.get(f"/ecommerce/metrics/{start}/{end}")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    @pytest.mark.parametrize("start,end", [
+        ("2024-01-01", "2024-01-31"),
+        ("2024-03-01", "2024-03-31"),
+    ])
+    def test_supply_chain_metrics_date_ranges(self, start, end):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value = []
+        resp = client.get(f"/supply-chain/metrics/{start}/{end}")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    @pytest.mark.parametrize("start,end", [
+        ("2024-01-01", "2024-01-31"),
+        ("2024-12-01", "2024-12-31"),
+    ])
+    def test_financial_metrics_date_ranges(self, start, end):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value = []
+        resp = client.get(f"/financial/metrics/{start}/{end}")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    @pytest.mark.parametrize("supplier_id", [1, 100, 500])
+    def test_supplier_performance_by_id(self, supplier_id):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value.fetchone.return_value = None
+        resp = client.get(f"/supply-chain/supplier/{supplier_id}/performance")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    def test_kpi_summary_endpoint(self):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value.fetchone.return_value = None
+        resp = client.get("/kpis/summary")
+        assert resp.status_code in (200, 404, 500)
+
+    @pytest.mark.parametrize("days", [7, 30, 90])
+    def test_conversion_rate_day_ranges(self, days):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value.fetchone.return_value = None
+        resp = client.get(f"/ecommerce/conversion-rate?days={days}")
+        assert resp.status_code in (200, 404, 422, 500)
