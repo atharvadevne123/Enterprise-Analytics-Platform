@@ -152,6 +152,32 @@ public schema          analytics schema
 
 ---
 
+## Testing
+
+```bash
+# Install dependencies
+make install
+
+# Run test suite with coverage
+make test
+
+# Lint (ruff)
+make lint
+
+# Type check (mypy)
+make type-check
+```
+
+The test suite covers:
+- Analytics API endpoints (happy path + edge cases)
+- Anomaly detection service (parametrized by domain and severity)
+- Forecasting service (parametrized by horizon and product)
+- Kafka producer/consumer (mocked, error handling)
+- Pydantic data models (enum validation)
+- Project structure and config file integrity
+
+---
+
 ## Quick Start
 
 ### Prerequisites
