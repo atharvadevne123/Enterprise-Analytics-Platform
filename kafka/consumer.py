@@ -3,12 +3,13 @@ Kafka Consumers for all domains
 Handles real-time event consumption from Kafka topics
 """
 
+from __future__ import annotations
+
 import json
 import logging
-from typing import Callable, Optional
+from typing import Callable, List, Optional
+
 from kafka import KafkaConsumer
-from kafka.errors import KafkaError
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -16,19 +17,20 @@ logger = logging.getLogger(__name__)
 class UnifiedConsumer:
     """Unified Kafka consumer for all domains"""
 
-    def __init__(self,
-                 topic: str,
-                 broker_urls: list = None,
-                 group_id: str = "unified-analytics",
-                 auto_offset_reset: str = "earliest"):
-        """
-        Initialize Kafka consumer
+    def __init__(
+        self,
+        topic: str,
+        broker_urls: Optional[List[str]] = None,
+        group_id: str = "unified-analytics",
+        auto_offset_reset: str = "earliest",
+    ) -> None:
+        """Initialize Kafka consumer.
 
         Args:
-            topic: Kafka topic to consume
-            broker_urls: List of Kafka broker addresses
-            group_id: Consumer group ID
-            auto_offset_reset: Start position for new consumer groups
+            topic: Kafka topic to consume.
+            broker_urls: List of Kafka broker addresses.
+            group_id: Consumer group ID.
+            auto_offset_reset: Start position for new consumer groups.
         """
         if broker_urls is None:
             broker_urls = ["localhost:9092"]
