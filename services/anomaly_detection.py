@@ -3,16 +3,18 @@ Anomaly Detection Microservice
 Detects anomalies in KPI metrics using statistical methods
 """
 
+from __future__ import annotations
+
+import logging
+import os
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from datetime import datetime, date, timedelta
-from typing import List, Optional
-from decimal import Decimal
-import logging
 from sqlalchemy import create_engine, text
-from scipy import stats
-import numpy as np
-import os
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -53,7 +55,7 @@ class AnomalyAlert(BaseModel):
 
 # Root
 @app.get("/")
-def root():
+def root() -> Dict[str, Any]:
     return {
         "service": "anomaly-detection",
         "version": "1.0.0",
@@ -72,7 +74,7 @@ def root():
 
 # Health check
 @app.get("/health")
-def health_check():
+def health_check() -> Dict[str, str]:
     """Health check endpoint"""
     return {"status": "healthy", "service": "anomaly-detection"}
 
@@ -112,7 +114,7 @@ def detect_statistical_anomaly(
 # E-Commerce Anomalies
 
 @app.post("/detect/ecommerce/revenue")
-def detect_revenue_anomaly(current_date: Optional[date] = None):
+def detect_revenue_anomaly(current_date: Optional[date] = None) -> Dict[str, Any]:
     """Detect anomaly in e-commerce revenue"""
     if not current_date:
         current_date = datetime.now().date()
@@ -191,7 +193,7 @@ def detect_revenue_anomaly(current_date: Optional[date] = None):
 
 
 @app.post("/detect/ecommerce/conversion-rate")
-def detect_conversion_anomaly(current_date: Optional[date] = None):
+def detect_conversion_anomaly(current_date: Optional[date] = None) -> Dict[str, Any]:
     """Detect anomaly in conversion rate"""
     if not current_date:
         current_date = datetime.now().date()
@@ -260,7 +262,7 @@ def detect_conversion_anomaly(current_date: Optional[date] = None):
 # Supply Chain Anomalies
 
 @app.post("/detect/supply-chain/on-time-delivery")
-def detect_delivery_anomaly(current_date: Optional[date] = None):
+def detect_delivery_anomaly(current_date: Optional[date] = None) -> Dict[str, Any]:
     """Detect anomaly in on-time delivery percentage"""
     if not current_date:
         current_date = datetime.now().date()
@@ -408,7 +410,7 @@ def get_active_alerts(
 
 
 @app.post("/alerts/{alert_id}/acknowledge")
-def acknowledge_alert(alert_id: str):
+def acknowledge_alert(alert_id: str) -> Dict[str, str]:
     """Acknowledge an alert"""
     try:
         return {
