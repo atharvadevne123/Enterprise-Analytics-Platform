@@ -3,19 +3,20 @@ Forecasting Service Microservice
 Demand forecasting, lead time prediction, and cash flow forecasting
 """
 
+from __future__ import annotations
+
+import logging
+import os
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any, Dict
+
+import numpy as np
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
-from datetime import datetime, date, timedelta
-from typing import List, Optional
-from decimal import Decimal
-import logging
-from sqlalchemy import create_engine, text
 from sklearn.linear_model import LinearRegression
-from statsmodels.tsa.seasonal import seasonal_decompose
+from sqlalchemy import create_engine, text
 from statsmodels.tsa.arima.model import ARIMA
-import numpy as np
-import pandas as pd
-import os
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -81,7 +82,7 @@ class CashFlowForecast(BaseModel):
 
 # Root
 @app.get("/")
-def root():
+def root() -> Dict[str, Any]:
     return {
         "service": "forecasting-service",
         "version": "1.0.0",
@@ -98,7 +99,7 @@ def root():
 
 # Health check
 @app.get("/health")
-def health_check():
+def health_check() -> Dict[str, str]:
     """Health check endpoint"""
     return {"status": "healthy", "service": "forecasting"}
 
@@ -135,7 +136,6 @@ def forecast_demand(
                 )
 
             # Prepare data
-            dates = [datetime.strptime(str(d[0]), "%Y%m%d").date() for d, _ in reversed(historical)]
             quantities = np.array([q for _, q in reversed(historical)])
 
             # Simple linear regression forecast
@@ -221,8 +221,8 @@ def forecast_category_demand(
                 fitted_model = model.fit()
                 forecast = fitted_model.get_forecast(steps=horizon_days).predicted_mean
                 forecast_values = np.maximum(forecast.values, 0)
-            except:
-                # Fallback to simple moving average
+            except Exception as arima_err:
+                logger.warning("ARIMA failed (%s); falling back to moving average", arima_err)
                 forecast_values = np.full(horizon_days, np.mean(quantities))
 
             return {
@@ -249,7 +249,7 @@ def forecast_category_demand(
 # Lead Time Forecasting
 
 @app.get("/forecast/lead-time/{supplier_id}")
-def forecast_supplier_lead_time(supplier_id: int):
+def forecast_supplier_lead_time(supplier_id: int) -> Dict[str, Any]:
     """Forecast supplier lead time"""
     try:
         with engine.connect() as conn:
