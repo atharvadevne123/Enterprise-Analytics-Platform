@@ -12,7 +12,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import create_engine, text
 
 # Setup logging
@@ -33,6 +33,23 @@ DB_URL = os.getenv(
 )
 
 engine = create_engine(DB_URL, pool_size=20, max_overflow=40)
+
+
+# Request validation models
+class DateRangeRequest(BaseModel):
+    """Validated date range for analytics queries."""
+
+    start_date: date
+    end_date: date
+
+    @field_validator("end_date")
+    @classmethod
+    def end_must_be_after_start(cls, end: date, info: Any) -> date:
+        """Ensure end_date is not before start_date."""
+        start = info.data.get("start_date")
+        if start and end < start:
+            raise ValueError("end_date must be >= start_date")
+        return end
 
 
 # Response models
