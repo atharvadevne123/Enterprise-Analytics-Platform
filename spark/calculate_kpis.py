@@ -3,6 +3,10 @@ PySpark Job: Calculate Daily KPI Metrics
 Computes aggregated metrics for all domains
 """
 
+from __future__ import annotations
+
+import logging
+import os
 import sys
 
 from pyspark.sql import SparkSession
@@ -10,11 +14,13 @@ from pyspark.sql.functions import avg, col, count, current_timestamp
 from pyspark.sql.functions import round as spark_round
 from pyspark.sql.functions import sum as spark_sum
 
+logger = logging.getLogger(__name__)
+
 # Initialize Spark session
 spark = SparkSession.builder \
     .appName("calculate-kpis") \
-    .config("spark.executor.memory", "4g") \
-    .config("spark.executor.cores", "2") \
+    .config("spark.executor.memory", os.getenv("SPARK_EXECUTOR_MEMORY", "4g")) \
+    .config("spark.executor.cores", os.getenv("SPARK_EXECUTOR_CORES", "2")) \
     .config("spark.shuffle.partitions", "200") \
     .getOrCreate()
 
@@ -22,12 +28,15 @@ spark.sparkContext.setLogLevel("INFO")
 
 # Database connection properties
 db_properties = {
-    "user": "postgres",
-    "password": "password",
-    "driver": "org.postgresql.Driver"
+    "user": os.getenv("POSTGRES_USER", "postgres"),
+    "password": os.getenv("POSTGRES_PASSWORD", "password"),
+    "driver": "org.postgresql.Driver",
 }
 
-db_url = "jdbc:postgresql://localhost:5432/analytics_warehouse"
+db_url = os.getenv(
+    "DATABASE_JDBC_URL",
+    "jdbc:postgresql://localhost:5432/analytics_warehouse",
+)
 
 
 def calculate_ecommerce_kpis(spark):
