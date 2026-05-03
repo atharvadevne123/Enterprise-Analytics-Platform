@@ -303,3 +303,55 @@ Enterprise-Analytics-Platform/
 ├── docker-compose.yml
 └── requirements.services.txt
 ```
+---
+
+## API Reference
+
+### Analytics API (port 8000)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | Service metadata and endpoint listing |
+| GET | `/health` | Liveness probe |
+| GET | `/version` | Service version |
+| GET | `/metrics` | Pool size and status |
+| GET | `/ecommerce/metrics/{start}/{end}` | E-commerce KPIs for date range |
+| GET | `/ecommerce/conversion-rate?days=N` | Conversion rate stats for last N days |
+| GET | `/supply-chain/metrics/{start}/{end}` | Supply chain KPIs for date range |
+| GET | `/supply-chain/supplier/{id}/performance` | Single-supplier performance |
+| GET | `/financial/metrics/{start}/{end}` | Financial KPIs for date range |
+| GET | `/financial/budget-vs-actual/{gl_account_id}` | Budget vs actual comparison |
+| GET | `/kpis/unified/{start}/{end}` | Cross-domain unified KPIs |
+| GET | `/kpis/summary` | Latest KPI snapshot across all domains |
+
+### Forecasting Service (port 8001)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Liveness probe |
+| GET | `/version` | Service version |
+| GET | `/metrics` | Pool size and status |
+| GET | `/forecast/demand/{product_id}` | Demand forecast for a product |
+| GET | `/forecast/lead-time/{supplier_id}` | Lead time prediction for a supplier |
+| GET | `/forecast/category-demand/{category}` | Category-level demand forecast |
+| GET | `/forecast/cash-flow` | 30-day cash flow projection |
+
+### Anomaly Detection Service (port 8002)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Liveness probe |
+| GET | `/version` | Service version |
+| GET | `/metrics` | Detection method stats |
+| POST | `/detect/ecommerce/revenue` | Revenue anomaly check for a date |
+| POST | `/detect/ecommerce/conversion-rate` | Conversion rate anomaly check |
+| POST | `/detect/supply-chain/on-time-delivery` | Delivery anomaly check |
+| POST | `/detect/financial/budget-variance` | Budget variance anomaly check |
+| GET | `/alerts/active` | All active alerts (filterable) |
+| POST | `/alerts/{alert_id}/acknowledge` | Acknowledge an alert |
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch strategy, code style, and PR guidelines.
