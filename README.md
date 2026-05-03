@@ -1,4 +1,4 @@
-![Docker](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/docker-publish.yml/badge.svg) ![Python Package](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/python-publish.yml/badge.svg) ![Bump Version](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/bump-version.yml/badge.svg)
+![CI](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/ci.yml/badge.svg) ![Docker](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/docker-publish.yml/badge.svg) ![Python Package](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/python-publish.yml/badge.svg) ![Bump Version](https://github.com/atharvadevne123/Enterprise-Analytics-Platform/actions/workflows/bump-version.yml/badge.svg)
 
 # Enterprise Analytics Platform
 
