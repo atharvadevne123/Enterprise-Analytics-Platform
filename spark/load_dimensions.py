@@ -3,17 +3,23 @@ PySpark Job: Load Dimension Tables
 Loads and updates dimension tables from staging data
 """
 
+from __future__ import annotations
+
+import logging
+import os
 import sys
 from datetime import datetime
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import coalesce, col, current_timestamp, lit
 
+logger = logging.getLogger(__name__)
+
 # Initialize Spark session
 spark = SparkSession.builder \
     .appName("load-dimensions") \
-    .config("spark.executor.memory", "4g") \
-    .config("spark.executor.cores", "2") \
+    .config("spark.executor.memory", os.getenv("SPARK_EXECUTOR_MEMORY", "4g")) \
+    .config("spark.executor.cores", os.getenv("SPARK_EXECUTOR_CORES", "2")) \
     .config("spark.shuffle.partitions", "200") \
     .getOrCreate()
 
@@ -21,12 +27,15 @@ spark.sparkContext.setLogLevel("INFO")
 
 # Database connection properties
 db_properties = {
-    "user": "postgres",
-    "password": "password",  # Use environment variable in production
-    "driver": "org.postgresql.Driver"
+    "user": os.getenv("POSTGRES_USER", "postgres"),
+    "password": os.getenv("POSTGRES_PASSWORD", "password"),
+    "driver": "org.postgresql.Driver",
 }
 
-db_url = "jdbc:postgresql://localhost:5432/analytics_warehouse"
+db_url = os.getenv(
+    "DATABASE_JDBC_URL",
+    "jdbc:postgresql://localhost:5432/analytics_warehouse",
+)
 
 
 def load_products_dimension(spark):
