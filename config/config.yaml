@@ -146,3 +146,29 @@ features:
   forecasting: true
   data_quality_checks: true
   auto_remediation: false
+
+# API Rate Limiting
+rate_limiting:
+  enabled: true
+  requests_per_minute: 100
+  burst_size: 20
+  exclude_paths:
+    - "/health"
+    - "/version"
+    - "/metrics"
+
+# Caching
+caching:
+  enabled: true
+  backend: "memory"
+  ttl_seconds: 300
+  max_size: 1000
+
+# Security
+security:
+  cors_origins:
+    - "http://localhost:3000"
+    - "https://analytics.company.com"
+  cors_allow_credentials: false
+  api_key_header: "X-API-Key"
+  require_auth: false
