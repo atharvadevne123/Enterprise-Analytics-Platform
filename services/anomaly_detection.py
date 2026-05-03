@@ -23,8 +23,15 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="Anomaly Detection Service",
-    description="Real-time anomaly detection for KPI metrics",
-    version="1.0.0"
+    description=(
+        "Real-time statistical anomaly detection for E-Commerce, Supply Chain, "
+        "and Financial KPI metrics using Z-score and IQR methods."
+    ),
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    contact={"name": "Analytics Team", "email": "devneatharva@gmail.com"},
+    license_info={"name": "MIT"},
 )
 
 # Database connection
