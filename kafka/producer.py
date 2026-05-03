@@ -3,13 +3,15 @@ Kafka Producers for all domains
 Handles real-time event streaming to Kafka topics
 """
 
+from __future__ import annotations
+
 import json
 import logging
-from typing import Dict, Any, Optional
-from kafka import KafkaProducer
-from kafka.errors import KafkaError
 from datetime import datetime
 from decimal import Decimal
+from typing import Any, Dict, List, Optional
+
+from kafka import KafkaProducer
 
 logger = logging.getLogger(__name__)
 
@@ -27,12 +29,11 @@ class DecimalEncoder(json.JSONEncoder):
 class UnifiedProducer:
     """Unified Kafka producer for all domains"""
 
-    def __init__(self, broker_urls: list = None):
-        """
-        Initialize Kafka producer
+    def __init__(self, broker_urls: Optional[List[str]] = None) -> None:
+        """Initialize Kafka producer.
 
         Args:
-            broker_urls: List of Kafka broker addresses
+            broker_urls: List of Kafka broker addresses.
         """
         if broker_urls is None:
             broker_urls = ["localhost:9092"]
@@ -225,8 +226,12 @@ class UnifiedProducer:
         self.producer.flush(timeout_ms=timeout_ms)
         logger.info("Producer flushed successfully")
 
-    def close(self):
-        """Close the producer"""
+    def send_financial_event(self, financial_data: Dict[str, Any], callback: Any = None) -> bool:
+        """Alias for send_transaction_event for backward compatibility."""
+        return self.send_transaction_event(financial_data, callback)
+
+    def close(self) -> None:
+        """Close the producer."""
         self.producer.close()
         logger.info("Producer closed")
 
