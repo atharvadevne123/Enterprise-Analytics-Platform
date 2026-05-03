@@ -100,8 +100,25 @@ def root() -> Dict[str, Any]:
 # Health check
 @app.get("/health")
 def health_check() -> Dict[str, str]:
-    """Health check endpoint"""
+    """Return service health status."""
     return {"status": "healthy", "service": "forecasting"}
+
+
+@app.get("/version")
+def version() -> Dict[str, str]:
+    """Return service version information."""
+    return {"service": "forecasting-service", "version": "1.0.0", "python": "3.10+"}
+
+
+@app.get("/metrics")
+def metrics() -> Dict[str, Any]:
+    """Return basic service metrics."""
+    return {
+        "service": "forecasting-service",
+        "status": "running",
+        "models_available": ["linear_regression", "arima", "prophet"],
+        "db_pool_size": engine.pool.size(),
+    }
 
 
 # Demand Forecasting
