@@ -4,9 +4,10 @@ Loads order, delivery, and transaction facts from staging
 """
 
 import sys
+
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, current_timestamp, when, round as spark_round
-from datetime import datetime
+from pyspark.sql.functions import col, current_timestamp
+from pyspark.sql.functions import round as spark_round
 
 # Initialize Spark session
 spark = SparkSession.builder \
@@ -35,10 +36,6 @@ def load_orders_fact(spark):
     # Read staging data
     orders = spark.read \
         .jdbc(db_url, "staging.stg_orders", db_properties)
-
-    # Join with date dimension
-    dates = spark.read \
-        .jdbc(db_url, "public.dim_dates", db_properties)
 
     # Convert order_date to date_id format
     orders = orders.withColumn(

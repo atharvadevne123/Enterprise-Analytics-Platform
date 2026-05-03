@@ -4,9 +4,10 @@ Loads and updates dimension tables from staging data
 """
 
 import sys
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, current_timestamp, coalesce, lit
 from datetime import datetime
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import coalesce, col, current_timestamp, lit
 
 # Initialize Spark session
 spark = SparkSession.builder \
@@ -125,7 +126,7 @@ def load_date_dimension(spark):
     """Load date dimension table (run once)"""
     print("Loading date dimension...")
 
-    from datetime import datetime, timedelta
+    from datetime import timedelta
 
     # Generate dates for 10 years
     start_date = datetime(2020, 1, 1)

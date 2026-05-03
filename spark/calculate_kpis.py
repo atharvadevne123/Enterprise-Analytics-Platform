@@ -4,9 +4,11 @@ Computes aggregated metrics for all domains
 """
 
 import sys
+
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, sum as spark_sum, avg, count, round as spark_round, current_timestamp
-from datetime import datetime
+from pyspark.sql.functions import avg, col, count, current_timestamp
+from pyspark.sql.functions import round as spark_round
+from pyspark.sql.functions import sum as spark_sum
 
 # Initialize Spark session
 spark = SparkSession.builder \
@@ -95,9 +97,6 @@ def calculate_financial_kpis(spark):
     transactions = spark.read \
         .jdbc(db_url, "public.fact_transactions", db_properties)
 
-    budgets = spark.read \
-        .jdbc(db_url, "public.fact_budget_actuals", db_properties)
-
     # Calculate daily financials
     metrics = transactions.groupBy("transaction_date_id").agg(
         spark_round(spark_sum(
@@ -131,16 +130,6 @@ def calculate_unified_kpis(spark):
     # Read all relevant data
     orders = spark.read.jdbc(db_url, "public.fact_orders", db_properties)
     deliveries = spark.read.jdbc(db_url, "public.fact_deliveries", db_properties)
-
-    # Revenue per supplier
-    revenue_per_supplier = orders.groupBy("supplier_id", "order_date_id").agg(
-        spark_sum("total_amount").alias("revenue")
-    )
-
-    # Profit per product
-    profit_per_product = orders.groupBy("product_id", "order_date_id").agg(
-        spark_sum("gross_profit").alias("profit")
-    )
 
     # Order-to-cash cycle (simple: average delivery days)
     order_cash_cycle = deliveries.groupBy("order_date_id").agg(
