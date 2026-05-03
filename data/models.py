@@ -3,12 +3,14 @@ Data models for the Unified Enterprise Analytics Platform
 Defines Pydantic models for all events and data structures
 """
 
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field
 from decimal import Decimal
 from enum import Enum
+from typing import Optional
 
+from pydantic import BaseModel, Field
 
 # ============================================================================
 # ENUMS
