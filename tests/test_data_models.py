@@ -81,6 +81,6 @@ class TestModelImports:
         from data.models import DeliveryEvent
         assert DeliveryEvent is not None
 
-    def test_import_financial_transaction(self):
-        from data.models import FinancialTransaction
-        assert FinancialTransaction is not None
+    def test_import_transaction_event(self):
+        from data.models import TransactionEvent
+        assert TransactionEvent is not None
