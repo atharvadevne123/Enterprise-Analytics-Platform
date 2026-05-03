@@ -3,6 +3,8 @@ Airflow DAG for Data Validation and Quality Checks
 Runs daily to validate incoming data before ETL processing
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta
 
