@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -12,8 +12,6 @@ class TestLoadDimensions:
 
     def test_module_importable(self):
         with patch("pyspark.sql.SparkSession"):
-            import importlib
-            import sys
             # If not already importable due to PySpark absence, just verify module exists
             import os
             assert os.path.exists("spark/load_dimensions.py")

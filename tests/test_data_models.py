@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from decimal import Decimal
-
 import pytest
-from pydantic import ValidationError
 
 from data.models import (
     CustomerSegment,

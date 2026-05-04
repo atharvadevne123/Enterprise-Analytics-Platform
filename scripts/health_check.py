@@ -15,7 +15,6 @@ import sys
 import urllib.request
 from typing import Dict, List, Tuple
 
-
 SERVICES: Dict[str, int] = {
     "analytics-api": 8000,
     "forecasting-service": 8001,

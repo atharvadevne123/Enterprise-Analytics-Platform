@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -68,6 +68,6 @@ class TestProducerErrorHandling:
             mock_cls.side_effect = Exception("Cannot connect to Kafka")
             from kafka.producer import UnifiedProducer
             try:
-                p = UnifiedProducer(broker_urls=["bad-host:9092"])
+                UnifiedProducer(broker_urls=["bad-host:9092"])
             except Exception as e:
                 assert "Kafka" in str(e) or True

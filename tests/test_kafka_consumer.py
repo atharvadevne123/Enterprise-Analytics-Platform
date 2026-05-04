@@ -69,8 +69,8 @@ class TestConsumerErrorHandling:
             mock_cls.side_effect = Exception("Kafka connection refused")
             from kafka.consumer import UnifiedConsumer
             try:
-                c = UnifiedConsumer(topic="test", broker_urls=["bad:9092"])
-            except Exception as e:
+                UnifiedConsumer(topic="test", broker_urls=["bad:9092"])
+            except Exception:
                 assert True
 
     @pytest.mark.parametrize("group_id", ["group-1", "analytics-consumers", "test-group"])

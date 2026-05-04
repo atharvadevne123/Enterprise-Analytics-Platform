@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import os
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date
 from typing import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-
 
 # ---------------------------------------------------------------------------
 # Environment overrides so services never hit a real DB / Kafka
