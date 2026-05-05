@@ -12,10 +12,10 @@ class TestProducerEventFormats:
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        with patch("kafka.producer.KafkaProducer") as mock_cls:
+        with patch("messaging.producer.KafkaProducer") as mock_cls:
             self.mock_producer = MagicMock()
             mock_cls.return_value = self.mock_producer
-            from kafka.producer import UnifiedProducer
+            from messaging.producer import UnifiedProducer
             self.p = UnifiedProducer(broker_urls=["localhost:9092"])
             yield
 
@@ -65,9 +65,9 @@ class TestConsumerGroupIsolation:
         ("etl-consumers", "api-consumers"),
     ])
     def test_separate_consumer_groups(self, group1, group2):
-        with patch("kafka.consumer.KafkaConsumer") as mock_cls:
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
-            from kafka.consumer import UnifiedConsumer
+            from messaging.consumer import UnifiedConsumer
             c1 = UnifiedConsumer(topic="orders", group_id=group1)
             c2 = UnifiedConsumer(topic="orders", group_id=group2)
             assert c1.group_id != c2.group_id
@@ -79,9 +79,9 @@ class TestMultiTopicConsumer:
     """Tests for the MultiTopicConsumer class."""
 
     def test_multi_topic_instantiation(self):
-        with patch("kafka.consumer.KafkaConsumer") as mock_cls:
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
-            from kafka.consumer import MultiTopicConsumer
+            from messaging.consumer import MultiTopicConsumer
             c = MultiTopicConsumer(
                 topics=["orders", "deliveries", "financial-transactions"],
                 broker_urls=["localhost:9092"],
@@ -89,10 +89,10 @@ class TestMultiTopicConsumer:
             assert c.topics == ["orders", "deliveries", "financial-transactions"]
 
     def test_multi_topic_close(self):
-        with patch("kafka.consumer.KafkaConsumer") as mock_cls:
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_inst = MagicMock()
             mock_cls.return_value = mock_inst
-            from kafka.consumer import MultiTopicConsumer
+            from messaging.consumer import MultiTopicConsumer
             c = MultiTopicConsumer(topics=["orders"], broker_urls=["localhost:9092"])
             c.close()
             mock_inst.close.assert_called_once()
@@ -103,8 +103,8 @@ class TestMultiTopicConsumer:
         ["orders", "deliveries", "financial-transactions", "inventory-updates"],
     ])
     def test_multi_topic_with_various_topic_counts(self, topics):
-        with patch("kafka.consumer.KafkaConsumer") as mock_cls:
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
-            from kafka.consumer import MultiTopicConsumer
+            from messaging.consumer import MultiTopicConsumer
             c = MultiTopicConsumer(topics=topics, broker_urls=["localhost:9092"])
             assert len(c.topics) == len(topics)

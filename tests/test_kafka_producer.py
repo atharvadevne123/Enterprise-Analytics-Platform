@@ -10,10 +10,10 @@ import pytest
 class TestUnifiedProducer:
     @pytest.fixture(autouse=True)
     def setup(self):
-        with patch("kafka.producer.KafkaProducer") as mock_cls:
+        with patch("messaging.producer.KafkaProducer") as mock_cls:
             self.mock_instance = MagicMock()
             mock_cls.return_value = self.mock_instance
-            from kafka.producer import UnifiedProducer
+            from messaging.producer import UnifiedProducer
             self.producer = UnifiedProducer(broker_urls=["localhost:9092"])
             yield
 
@@ -41,10 +41,10 @@ class TestUnifiedProducer:
 
     @pytest.mark.parametrize("topic", ["orders", "deliveries", "financial"])
     def test_send_to_different_topics(self, topic):
-        with patch("kafka.producer.KafkaProducer") as mock_cls:
+        with patch("messaging.producer.KafkaProducer") as mock_cls:
             mock_inst = MagicMock()
             mock_cls.return_value = mock_inst
-            from kafka.producer import UnifiedProducer
+            from messaging.producer import UnifiedProducer
             p = UnifiedProducer(broker_urls=["localhost:9092"])
             p.send_order_event({"order_id": f"ORD-{topic}"})
             mock_inst.send.assert_called_once()
@@ -52,11 +52,11 @@ class TestUnifiedProducer:
 
 class TestProducerErrorHandling:
     def test_send_retries_on_failure(self):
-        with patch("kafka.producer.KafkaProducer") as mock_cls:
+        with patch("messaging.producer.KafkaProducer") as mock_cls:
             mock_inst = MagicMock()
             mock_inst.send.side_effect = Exception("Kafka unavailable")
             mock_cls.return_value = mock_inst
-            from kafka.producer import UnifiedProducer
+            from messaging.producer import UnifiedProducer
             p = UnifiedProducer(broker_urls=["localhost:9092"])
             try:
                 p.send_order_event({"order_id": "ERR-001"})
@@ -64,9 +64,9 @@ class TestProducerErrorHandling:
                 pass
 
     def test_producer_connection_failure_handled(self):
-        with patch("kafka.producer.KafkaProducer") as mock_cls:
+        with patch("messaging.producer.KafkaProducer") as mock_cls:
             mock_cls.side_effect = Exception("Cannot connect to Kafka")
-            from kafka.producer import UnifiedProducer
+            from messaging.producer import UnifiedProducer
             try:
                 UnifiedProducer(broker_urls=["bad-host:9092"])
             except Exception as e:

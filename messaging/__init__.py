@@ -1,4 +1,4 @@
-"""Kafka producers and consumers for the Unified Enterprise Analytics Platform.
+"""Messaging producers and consumers for the Unified Enterprise Analytics Platform.
 
 Provides:
     UnifiedProducer: Producer for all domain event topics.

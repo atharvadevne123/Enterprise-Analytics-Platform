@@ -99,7 +99,7 @@ def sample_financial_row() -> dict:
 
 @pytest.fixture()
 def mock_kafka_producer() -> Generator:
-    with patch("kafka.producer.KafkaProducer") as mock_cls:
+    with patch("messaging.producer.KafkaProducer") as mock_cls:
         mock_instance = MagicMock()
         mock_cls.return_value = mock_instance
         yield mock_instance
@@ -107,7 +107,7 @@ def mock_kafka_producer() -> Generator:
 
 @pytest.fixture()
 def mock_kafka_consumer() -> Generator:
-    with patch("kafka.consumer.KafkaConsumer") as mock_cls:
+    with patch("messaging.consumer.KafkaConsumer") as mock_cls:
         mock_instance = MagicMock()
         mock_cls.return_value = mock_instance
         yield mock_instance

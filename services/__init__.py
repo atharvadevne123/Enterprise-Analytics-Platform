@@ -6,6 +6,8 @@ for analytics queries, demand forecasting, and anomaly detection.
 
 from __future__ import annotations
 
+from . import analytics_api, anomaly_detection, forecasting_service
+
 __all__ = [
     "analytics_api",
     "forecasting_service",

@@ -75,7 +75,7 @@ class Product(BaseAnalyticsModel):
     list_price: Decimal
     current_stock_level: int = 0
     reorder_point: int = 100
-    lead_time_days: int
+    lead_time_days: int = 0
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -167,9 +167,9 @@ class DeliveryEvent(BaseAnalyticsModel):
     total_cost: Decimal
     order_date: datetime
     delivery_date: datetime
-    promised_date: datetime
-    lead_time_days: int
-    is_on_time: bool
+    promised_date: datetime = Field(default_factory=datetime.utcnow)
+    lead_time_days: int = 0
+    is_on_time: bool = True
     is_quality_pass: bool = True
     delivery_status: DeliveryStatus = DeliveryStatus.PENDING
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -266,7 +266,7 @@ class FinancialMetrics(BaseAnalyticsModel):
     budget_variance: Decimal
     cash_position: Decimal
     gross_margin_pct: Decimal
-    operating_margin_pct: Decimal
+    operating_margin_pct: Decimal = Decimal("0.00")
     accounts_receivable: Decimal = Decimal("0.00")
     accounts_payable: Decimal = Decimal("0.00")
 

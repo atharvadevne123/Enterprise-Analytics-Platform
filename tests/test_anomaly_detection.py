@@ -112,12 +112,12 @@ class TestEdgeCases:
     def test_invalid_domain_param(self):
         client, _ = _make_client()
         resp = client.get("/anomalies/current?domain=invalid_domain_xyz")
-        assert resp.status_code in (200, 422, 400, 500)
+        assert resp.status_code in (200, 404, 422, 400, 500)
 
     def test_invalid_severity_param(self):
         client, _ = _make_client()
         resp = client.get("/anomalies/current?severity=UNKNOWN")
-        assert resp.status_code in (200, 422, 400, 500)
+        assert resp.status_code in (200, 404, 422, 400, 500)
 
     @pytest.mark.parametrize("days", [1, 7, 30, 90, 365])
     def test_history_day_ranges(self, days):

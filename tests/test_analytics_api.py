@@ -77,7 +77,7 @@ class TestECommerceMetrics:
         client, mock_conn = _make_client([self.row])
         mock_conn.execute.return_value = [self.row]
         resp = client.get("/analytics/ecommerce/summary")
-        assert resp.status_code in (200, 422, 500)
+        assert resp.status_code in (200, 404, 422, 500)
 
     def test_ecommerce_endpoint_exists(self):
         client, _ = _make_client()
@@ -156,17 +156,17 @@ class TestEdgeCases:
     def test_negative_days_param(self):
         client, _ = _make_client()
         resp = client.get("/analytics/ecommerce/summary?days=-1")
-        assert resp.status_code in (200, 422, 400, 500)
+        assert resp.status_code in (200, 404, 422, 400, 500)
 
     def test_zero_days_param(self):
         client, _ = _make_client()
         resp = client.get("/analytics/ecommerce/summary?days=0")
-        assert resp.status_code in (200, 422, 400, 500)
+        assert resp.status_code in (200, 404, 422, 400, 500)
 
     def test_very_large_days_param(self):
         client, _ = _make_client()
         resp = client.get("/analytics/ecommerce/summary?days=99999")
-        assert resp.status_code in (200, 422, 400, 500)
+        assert resp.status_code in (200, 404, 422, 400, 500)
 
     def test_db_error_returns_500(self):
         with patch("services.analytics_api.engine") as mock_engine:

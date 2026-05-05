@@ -34,7 +34,7 @@ jobs:
         run: |
           pytest tests/ -v --tb=short \
             --cov=services \
-            --cov=kafka \
+            --cov=messaging \
             --cov=data \
             --cov-report=term-missing \
             --cov-report=xml \

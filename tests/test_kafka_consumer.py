@@ -10,10 +10,10 @@ import pytest
 class TestUnifiedConsumer:
     @pytest.fixture(autouse=True)
     def setup(self):
-        with patch("kafka.consumer.KafkaConsumer") as mock_cls:
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             self.mock_instance = MagicMock()
             mock_cls.return_value = self.mock_instance
-            from kafka.consumer import UnifiedConsumer
+            from messaging.consumer import UnifiedConsumer
             self.consumer = UnifiedConsumer(
                 topic="orders",
                 broker_urls=["localhost:9092"],
@@ -36,9 +36,9 @@ class TestUnifiedConsumer:
 
     @pytest.mark.parametrize("topic", ["orders", "deliveries", "financial-transactions", "inventory"])
     def test_different_topics(self, topic):
-        with patch("kafka.consumer.KafkaConsumer") as mock_cls:
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
-            from kafka.consumer import UnifiedConsumer
+            from messaging.consumer import UnifiedConsumer
             consumer = UnifiedConsumer(topic=topic, broker_urls=["localhost:9092"])
             assert consumer.topic == topic
 
@@ -65,9 +65,9 @@ class TestUnifiedConsumer:
 
 class TestConsumerErrorHandling:
     def test_consumer_handles_connection_error(self):
-        with patch("kafka.consumer.KafkaConsumer") as mock_cls:
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.side_effect = Exception("Kafka connection refused")
-            from kafka.consumer import UnifiedConsumer
+            from messaging.consumer import UnifiedConsumer
             try:
                 UnifiedConsumer(topic="test", broker_urls=["bad:9092"])
             except Exception:
@@ -75,8 +75,8 @@ class TestConsumerErrorHandling:
 
     @pytest.mark.parametrize("group_id", ["group-1", "analytics-consumers", "test-group"])
     def test_different_consumer_groups(self, group_id):
-        with patch("kafka.consumer.KafkaConsumer") as mock_cls:
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
-            from kafka.consumer import UnifiedConsumer
+            from messaging.consumer import UnifiedConsumer
             c = UnifiedConsumer(topic="orders", group_id=group_id)
             assert c.group_id == group_id

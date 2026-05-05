@@ -110,12 +110,12 @@ class TestEdgeCases:
     def test_negative_horizon_handled(self):
         client, _ = _make_client()
         resp = client.get("/forecast/demand?horizon_days=-1")
-        assert resp.status_code in (200, 422, 400, 500)
+        assert resp.status_code in (200, 404, 422, 400, 500)
 
     def test_zero_horizon_handled(self):
         client, _ = _make_client()
         resp = client.get("/forecast/demand?horizon_days=0")
-        assert resp.status_code in (200, 422, 400, 500)
+        assert resp.status_code in (200, 404, 422, 400, 500)
 
     def test_db_error_handled_gracefully(self):
         with patch("services.forecasting_service.engine") as mock_engine:

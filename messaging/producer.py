@@ -231,7 +231,8 @@ class UnifiedProducer:
         return self.send_transaction_event(financial_data, callback)
 
     def close(self) -> None:
-        """Close the producer."""
+        """Close the producer, flushing pending messages first."""
+        self.producer.flush()
         self.producer.close()
         logger.info("Producer closed")
 
