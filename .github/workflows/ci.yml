@@ -25,7 +25,8 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install pytest pytest-cov ruff httpx pyyaml
-          pip install fastapi uvicorn pydantic sqlalchemy python-dotenv scipy numpy pandas scikit-learn kafka-python
+          pip install fastapi uvicorn pydantic sqlalchemy python-dotenv scipy numpy pandas scikit-learn statsmodels
+          pip install kafka-python || pip install kafka-python-ng || true
 
       - name: Lint with ruff
         run: ruff check . --select E,F,W,I --ignore E501
