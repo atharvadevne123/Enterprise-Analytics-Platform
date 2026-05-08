@@ -171,7 +171,7 @@ def metrics() -> Dict[str, Any]:
 def get_ecommerce_metrics(
     start_date: date,
     end_date: date,
-    granularity: str = Query("daily", regex="^(daily|weekly|monthly)$"),
+    granularity: str = Query("daily", pattern="^(daily|weekly|monthly)$"),
 ) -> List[Dict[str, Any]]:
     """Get e-commerce KPI metrics for date range"""
     try:
