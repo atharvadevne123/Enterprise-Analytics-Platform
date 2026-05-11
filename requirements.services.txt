@@ -9,7 +9,7 @@ pyarrow>=14,<20
 # Database
 psycopg2-binary>=2.9,<3
 sqlalchemy>=1.4,<3
-alembic>=1.12,<2
+alembic>=1.16.5,<2
 
 # API & Web
 fastapi>=0.104,<1
