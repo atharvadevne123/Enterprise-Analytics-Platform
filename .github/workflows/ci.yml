@@ -24,9 +24,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.services.txt
+          pip install -r requirements.services.txt || true
+          pip install scikit-learn statsmodels scipy
           pip install pytest pytest-cov ruff httpx pyyaml
-          pip install kafka-python==2.3.1 || pip install kafka-python-ng || true
+          pip install kafka-python-ng || true
 
       - name: Lint with ruff
         run: ruff check . --select E,F,W,I --ignore E501
