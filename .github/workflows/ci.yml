@@ -28,6 +28,7 @@ jobs:
           pip install scikit-learn statsmodels scipy
           pip install pytest pytest-cov ruff httpx pyyaml
           pip install kafka-python-ng || true
+          pip install "tomli>=2.0" || true
 
       - name: Lint with ruff
         run: ruff check . --select E,F,W,I --ignore E501
