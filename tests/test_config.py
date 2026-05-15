@@ -64,7 +64,10 @@ class TestProjectStructure:
         assert "sqlalchemy" in content.lower()
 
     def test_pyproject_toml_valid(self):
-        import tomllib
+        try:
+            import tomllib
+        except ImportError:
+            import tomli as tomllib  # type: ignore[no-redef]
         with open("pyproject.toml", "rb") as f:
             data = tomllib.load(f)
         assert "project" in data or "build-system" in data
