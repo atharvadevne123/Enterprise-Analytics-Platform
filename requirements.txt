@@ -20,7 +20,7 @@ alembic==1.16.5
 # API & Web
 fastapi==0.104.1
 uvicorn==0.24.0
-pydantic==2.4.2
+pydantic==2.13.4
 httpx==0.28.1
 
 # Data Validation
