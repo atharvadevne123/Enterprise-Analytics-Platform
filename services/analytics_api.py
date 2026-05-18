@@ -167,9 +167,21 @@ def metrics() -> Dict[str, Any]:
     return {
         "service": "analytics-api",
         "status": "running",
-        "endpoints_available": 8,
+        "endpoints_available": 9,
         "db_pool_size": engine.pool.size(),
     }
+
+
+@app.get("/readyz")
+def readiness() -> Dict[str, Any]:
+    """Kubernetes readiness probe — verifies DB connection is reachable."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ready", "service": "analytics-api"}
+    except Exception as e:
+        logger.error("Readiness check failed: %s", e)
+        raise HTTPException(status_code=503, detail="Service not ready")
 
 
 # E-Commerce Endpoints
