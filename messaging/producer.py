@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class DecimalEncoder(json.JSONEncoder):
-    """JSON encoder for Decimal types"""
-    def default(self, obj):
+    """JSON encoder for Decimal and datetime types."""
+
+    def default(self, obj: Any) -> Any:
         if isinstance(obj, Decimal):
             return float(obj)
         if isinstance(obj, datetime):
@@ -221,8 +222,8 @@ class UnifiedProducer:
             logger.error(f"Failed to send actual event: {e}")
             return False
 
-    def flush(self, timeout_ms: int = 30000):
-        """Flush all pending messages"""
+    def flush(self, timeout_ms: int = 30000) -> None:
+        """Flush all pending messages."""
         self.producer.flush(timeout_ms=timeout_ms)
         logger.info("Producer flushed successfully")
 
