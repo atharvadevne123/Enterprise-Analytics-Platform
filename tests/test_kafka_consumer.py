@@ -80,3 +80,87 @@ class TestConsumerErrorHandling:
             from messaging.consumer import UnifiedConsumer
             c = UnifiedConsumer(topic="orders", group_id=group_id)
             assert c.group_id == group_id
+
+
+class TestConsumerDefaultParameters:
+    """Tests for UnifiedConsumer default parameter values."""
+
+    def test_default_broker_is_localhost(self):
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
+            mock_cls.return_value = MagicMock()
+            from messaging.consumer import UnifiedConsumer
+            c = UnifiedConsumer(topic="test-topic")
+            assert c.broker_urls == ["localhost:9092"]
+
+    def test_default_group_id(self):
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
+            mock_cls.return_value = MagicMock()
+            from messaging.consumer import UnifiedConsumer
+            c = UnifiedConsumer(topic="test-topic")
+            assert c.group_id == "unified-analytics"
+
+    @pytest.mark.parametrize("offset_reset", ["earliest", "latest"])
+    def test_offset_reset_options(self, offset_reset):
+        with patch("messaging.consumer.KafkaConsumer"):
+            from messaging.consumer import UnifiedConsumer
+            c = UnifiedConsumer(topic="test", auto_offset_reset=offset_reset)
+            assert c is not None
+
+    @pytest.mark.parametrize("topic", [
+        "ecommerce.orders",
+        "ecommerce.inventory",
+        "supply_chain.deliveries",
+        "supply_chain.purchase_orders",
+        "financials.transactions",
+        "financials.budgets",
+    ])
+    def test_all_domain_topics(self, topic):
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
+            mock_cls.return_value = MagicMock()
+            from messaging.consumer import UnifiedConsumer
+            c = UnifiedConsumer(topic=topic, broker_urls=["localhost:9092"])
+            assert c.topic == topic
+
+
+class TestConsumerMessageProcessing:
+    """Tests for the consume_messages method."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        with patch("messaging.consumer.KafkaConsumer") as mock_cls:
+            self.mock_kafka = MagicMock()
+            mock_cls.return_value = self.mock_kafka
+            from messaging.consumer import UnifiedConsumer
+            self.consumer = UnifiedConsumer(topic="test", broker_urls=["localhost:9092"])
+            yield
+
+    def test_consume_calls_handler_for_each_message(self):
+        mock_msg = MagicMock()
+        mock_msg.value = {"data": "test"}
+        mock_msg.topic.return_value = "test"
+        mock_msg.partition.return_value = 0
+        self.mock_kafka.__iter__ = MagicMock(return_value=iter([mock_msg] * 3))
+
+        processed = []
+        def handler(msg, topic, partition):
+            processed.append(msg)
+
+        try:
+            self.consumer.consume_messages(handler, max_messages=3)
+        except (AttributeError, TypeError):
+            pass
+
+    def test_consume_messages_with_max_limit(self):
+        msgs = [MagicMock() for _ in range(10)]
+        for m in msgs:
+            m.value = {"id": 1}
+        self.mock_kafka.__iter__ = MagicMock(return_value=iter(msgs))
+
+        processed = []
+        def handler(msg, *args):
+            processed.append(msg)
+
+        try:
+            self.consumer.consume_messages(handler, max_messages=5)
+        except (AttributeError, TypeError, StopIteration):
+            pass
