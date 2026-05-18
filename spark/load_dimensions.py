@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import coalesce, col, current_timestamp, lit
@@ -38,34 +38,40 @@ db_url = os.getenv(
 )
 
 
-def load_products_dimension(spark):
-    """Load products dimension table"""
-    print("Loading products dimension...")
+def load_products_dimension(spark: SparkSession) -> None:
+    """Load the products dimension table from staging.
 
-    # Read from staging or source system
+    Performs a full overwrite (SCD Type 1) with warehouse timestamps added.
+
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Loading products dimension...")
+
     df = spark.read \
         .jdbc(db_url, "staging.stg_products", db_properties)
 
-    # Add data warehouse metadata columns
     df = df.withColumn("dw_created_at", current_timestamp()) \
         .withColumn("dw_updated_at", current_timestamp())
 
-    # Write to dimension table (SCD Type 2: Keep history)
     df.write \
         .mode("overwrite") \
         .jdbc(db_url, "public.dim_products", db_properties)
 
-    print(f"✓ Loaded {df.count()} products")
+    logger.info("Loaded %d products", df.count())
 
 
-def load_customers_dimension(spark):
-    """Load customers dimension table"""
-    print("Loading customers dimension...")
+def load_customers_dimension(spark: SparkSession) -> None:
+    """Load the customers dimension table, joining lifetime value from orders.
+
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Loading customers dimension...")
 
     df = spark.read \
         .jdbc(db_url, "staging.stg_customers", db_properties)
 
-    # Calculate lifetime value from orders
     orders_df = spark.read \
         .jdbc(db_url, "staging.stg_orders", db_properties)
 
@@ -82,24 +88,27 @@ def load_customers_dimension(spark):
         .mode("overwrite") \
         .jdbc(db_url, "public.dim_customers", db_properties)
 
-    print(f"✓ Loaded {df.count()} customers")
+    logger.info("Loaded %d customers", df.count())
 
 
-def load_suppliers_dimension(spark):
-    """Load suppliers dimension table"""
-    print("Loading suppliers dimension...")
+def load_suppliers_dimension(spark: SparkSession) -> None:
+    """Load the suppliers dimension table with computed delivery and quality metrics.
+
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Loading suppliers dimension...")
 
     df = spark.read \
         .jdbc(db_url, "staging.stg_suppliers", db_properties)
 
-    # Calculate supplier metrics from deliveries
     deliveries_df = spark.read \
         .jdbc(db_url, "staging.stg_deliveries", db_properties)
 
     metrics_df = deliveries_df.groupBy("supplier_id") \
         .agg({
-            "is_on_time": "avg",  # on-time delivery %
-            "is_quality_pass": "avg"  # quality score
+            "is_on_time": "avg",
+            "is_quality_pass": "avg",
         }) \
         .withColumnRenamed("avg(is_on_time)", "on_time_delivery_pct") \
         .withColumnRenamed("avg(is_quality_pass)", "quality_score")
@@ -112,12 +121,16 @@ def load_suppliers_dimension(spark):
         .mode("overwrite") \
         .jdbc(db_url, "public.dim_suppliers", db_properties)
 
-    print(f"✓ Loaded {df.count()} suppliers")
+    logger.info("Loaded %d suppliers", df.count())
 
 
-def load_gl_accounts_dimension(spark):
-    """Load GL accounts dimension table"""
-    print("Loading GL accounts dimension...")
+def load_gl_accounts_dimension(spark: SparkSession) -> None:
+    """Load the GL accounts dimension table from staging.
+
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Loading GL accounts dimension...")
 
     df = spark.read \
         .jdbc(db_url, "staging.stg_gl_accounts", db_properties)
@@ -128,16 +141,19 @@ def load_gl_accounts_dimension(spark):
         .mode("overwrite") \
         .jdbc(db_url, "public.dim_gl_accounts", db_properties)
 
-    print(f"✓ Loaded {df.count()} GL accounts")
+    logger.info("Loaded %d GL accounts", df.count())
 
 
-def load_date_dimension(spark):
-    """Load date dimension table (run once)"""
-    print("Loading date dimension...")
+def load_date_dimension(spark: SparkSession) -> None:
+    """Generate and load the date dimension table for 2020-01-01 to 2030-12-31.
 
-    from datetime import timedelta
+    Intended to be run once (or on demand to extend the range).
 
-    # Generate dates for 10 years
+    Args:
+        spark: Active SparkSession to use for writing data.
+    """
+    logger.info("Loading date dimension...")
+
     start_date = datetime(2020, 1, 1)
     end_date = datetime(2030, 12, 31)
 
@@ -146,18 +162,18 @@ def load_date_dimension(spark):
 
     while current <= end_date:
         dates.append({
-            'date_id': int(current.strftime('%Y%m%d')),
-            'date': current.date(),
-            'year': current.year,
-            'quarter': (current.month - 1) // 3 + 1,
-            'month': current.month,
-            'week': current.isocalendar()[1],
-            'day_of_month': current.day,
-            'day_of_week': current.weekday() + 1,
-            'day_name': current.strftime('%A'),
-            'month_name': current.strftime('%B'),
-            'is_weekend': 1 if current.weekday() >= 5 else 0,
-            'is_holiday': 0
+            "date_id": int(current.strftime("%Y%m%d")),
+            "date": current.date(),
+            "year": current.year,
+            "quarter": (current.month - 1) // 3 + 1,
+            "month": current.month,
+            "week": current.isocalendar()[1],
+            "day_of_month": current.day,
+            "day_of_week": current.weekday() + 1,
+            "day_name": current.strftime("%A"),
+            "month_name": current.strftime("%B"),
+            "is_weekend": 1 if current.weekday() >= 5 else 0,
+            "is_holiday": 0,
         })
         current += timedelta(days=1)
 
@@ -167,14 +183,17 @@ def load_date_dimension(spark):
         .mode("overwrite") \
         .jdbc(db_url, "public.dim_dates", db_properties)
 
-    print(f"✓ Loaded {df.count()} dates")
+    logger.info("Loaded %d dates", df.count())
 
 
-def main():
-    """Main function"""
+def main() -> None:
+    """Entrypoint — dispatches to the dimension-specific loader.
+
+    Reads the dimension name from sys.argv[1].
+    """
     if len(sys.argv) < 2:
-        print("Usage: python load_dimensions.py <dimension_name>")
-        print("Available dimensions: products, customers, suppliers, gl_accounts, dates")
+        logger.error("Usage: python load_dimensions.py <dimension_name>")
+        logger.error("Available dimensions: products, customers, suppliers, gl_accounts, dates")
         sys.exit(1)
 
     dimension = sys.argv[1]
@@ -191,13 +210,13 @@ def main():
         elif dimension == "dates":
             load_date_dimension(spark)
         else:
-            print(f"Unknown dimension: {dimension}")
+            logger.error("Unknown dimension: %s", dimension)
             sys.exit(1)
 
-        print(f"\n✓ Successfully loaded {dimension} dimension")
+        logger.info("Successfully loaded %s dimension", dimension)
 
     except Exception as e:
-        print(f"✗ Error loading {dimension}: {str(e)}")
+        logger.error("Error loading %s: %s", dimension, e, exc_info=True)
         sys.exit(1)
 
     finally:
