@@ -222,6 +222,33 @@ class UnifiedProducer:
             logger.error(f"Failed to send actual event: {e}")
             return False
 
+
+    def send_batch(self, topic: str, events: list, key_field: str | None = None) -> int:
+        """Send a list of events to a Kafka topic as individual messages.
+
+        Args:
+            topic: Destination Kafka topic.
+            events: List of event objects (Pydantic models or dicts).
+            key_field: Optional attribute/key name to use as Kafka message key.
+
+        Returns:
+            Number of messages successfully queued.
+        """
+        queued = 0
+        for event in events:
+            key: bytes | None = None
+            if key_field:
+                raw_key = getattr(event, key_field, None) or (event.get(key_field) if isinstance(event, dict) else None)
+                if raw_key is not None:
+                    key = str(raw_key).encode()
+            try:
+                value = event.model_dump() if hasattr(event, "model_dump") else event
+                self.producer.send(topic, key=key, value=value)
+                queued += 1
+            except Exception as e:
+                logger.error("Failed to queue event to %s: %s", topic, e)
+        return queued
+
     def flush(self, timeout_ms: int = 30000) -> None:
         """Flush all pending messages."""
         self.producer.flush(timeout_ms=timeout_ms)
