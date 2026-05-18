@@ -265,7 +265,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     def process_message(message, topic, partition):
-        print(f"[{topic}:{partition}] {message}")
+        logger.info("[%s:%s] %s", topic, partition, message)
 
     # Example: consume from single topic
     consumer = UnifiedConsumer('ecommerce.orders')
