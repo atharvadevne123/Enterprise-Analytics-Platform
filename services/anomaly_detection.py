@@ -445,6 +445,80 @@ def detect_budget_variance_anomaly(
 
 # Get all active alerts
 
+@app.post("/detect/ecommerce/orders-count")
+def detect_orders_count_anomaly(
+    current_date: Optional[date] = None,
+    method: str = "zscore",
+) -> Dict[str, Any]:
+    """Detect anomaly in daily e-commerce order count using Z-score or IQR method.
+
+    Args:
+        current_date: Date to check (defaults to today).
+        method: Detection method, one of 'zscore' or 'iqr'.
+    """
+    if not current_date:
+        current_date = datetime.now().date()
+
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(
+                text("""
+                    SELECT total_orders
+                    FROM analytics.ecommerce_daily_metrics
+                    WHERE date < :current_date
+                    ORDER BY date DESC LIMIT 30
+                """),
+                {"current_date": current_date},
+            )
+            historical = [float(row[0]) for row in result]
+
+            current_result = conn.execute(
+                text("""
+                    SELECT total_orders FROM analytics.ecommerce_daily_metrics
+                    WHERE date = :date
+                """),
+                {"date": current_date},
+            ).fetchone()
+
+            if not current_result:
+                raise HTTPException(status_code=404, detail="No data for date")
+
+            current_value = float(current_result[0])
+
+            if method == "iqr":
+                is_anomaly, lower, upper = detect_iqr_anomaly(historical, current_value)
+                return {
+                    "alert_id": f"ecom_orders_{current_date}",
+                    "method": "iqr",
+                    "is_anomaly": is_anomaly,
+                    "current_value": current_value,
+                    "lower_fence": lower,
+                    "upper_fence": upper,
+                    "severity": "WARNING" if is_anomaly else "INFO",
+                    "timestamp": datetime.now(),
+                }
+
+            is_anomaly, z_score, mean, stddev = detect_statistical_anomaly(
+                historical, current_value
+            )
+            return {
+                "alert_id": f"ecom_orders_{current_date}",
+                "method": "zscore",
+                "is_anomaly": is_anomaly,
+                "current_value": current_value,
+                "mean": mean,
+                "z_score": z_score,
+                "severity": "CRITICAL" if abs(z_score) > 3 else ("WARNING" if is_anomaly else "INFO"),
+                "timestamp": datetime.now(),
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error detecting orders count anomaly: %s", e)
+        raise HTTPException(status_code=500, detail="Error detecting anomaly")
+
+
 @app.get("/alerts/active")
 def get_active_alerts(
     severity: Optional[str] = None,
