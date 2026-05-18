@@ -132,6 +132,8 @@ class InventoryEvent(BaseAnalyticsModel):
 # ============================================================================
 
 class Supplier(BaseAnalyticsModel):
+    """Supplier master record with performance metrics and contract details."""
+
     supplier_id: int
     supplier_name: str
     country: str
@@ -147,7 +149,8 @@ class Supplier(BaseAnalyticsModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class PurchaseOrderEvent(BaseAnalyticsModel):
-    """Purchase order event (Kafka topic: supply_chain.purchase_orders)"""
+    """Purchase order event published to Kafka topic supply_chain.purchase_orders."""
+
     po_id: int
     supplier_id: int
     product_id: int
@@ -160,7 +163,8 @@ class PurchaseOrderEvent(BaseAnalyticsModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class DeliveryEvent(BaseAnalyticsModel):
-    """Delivery event from suppliers (Kafka topic: supply_chain.deliveries)"""
+    """Delivery confirmation event published to Kafka topic supply_chain.deliveries."""
+
     delivery_id: int
     po_id: int
     supplier_id: int
