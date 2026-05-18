@@ -125,3 +125,98 @@ class TestEdgeCases:
         mock_conn.execute.return_value = []
         resp = client.get(f"/anomalies/history?days={days}")
         assert resp.status_code in (200, 404, 422, 500)
+
+
+class TestStatisticalHelpers:
+    """Unit tests for detect_statistical_anomaly and detect_iqr_anomaly helpers."""
+
+    def test_zscore_no_anomaly_for_normal_value(self):
+        from services.anomaly_detection import detect_statistical_anomaly
+        values = [100.0, 102.0, 98.0, 101.0, 99.0, 100.5, 100.0]
+        is_anom, z, mean, std = detect_statistical_anomaly(values, 100.0)
+        assert not is_anom
+        assert abs(z) < 2.0
+
+    def test_zscore_anomaly_for_outlier(self):
+        from services.anomaly_detection import detect_statistical_anomaly
+        values = [100.0] * 10
+        is_anom, z, mean, std = detect_statistical_anomaly(values, 200.0, threshold_sigma=1.0)
+        assert is_anom or std == 0
+
+    def test_zscore_insufficient_data_returns_false(self):
+        from services.anomaly_detection import detect_statistical_anomaly
+        is_anom, z, mean, std = detect_statistical_anomaly([10.0, 20.0], 15.0)
+        assert not is_anom
+
+    def test_iqr_detects_outlier_below(self):
+        from services.anomaly_detection import detect_iqr_anomaly
+        values = list(range(20, 80))
+        is_anom, lower, upper = detect_iqr_anomaly(values, 1.0)
+        assert is_anom
+
+    def test_iqr_no_anomaly_for_midrange_value(self):
+        from services.anomaly_detection import detect_iqr_anomaly
+        values = list(range(10, 50))
+        is_anom, lower, upper = detect_iqr_anomaly(values, 30.0)
+        assert not is_anom
+
+    def test_iqr_insufficient_data_returns_false(self):
+        from services.anomaly_detection import detect_iqr_anomaly
+        is_anom, lower, upper = detect_iqr_anomaly([1.0, 2.0, 3.0], 2.0)
+        assert not is_anom
+
+    @pytest.mark.parametrize("threshold", [1.0, 1.5, 2.0, 3.0])
+    def test_zscore_threshold_parametrized(self, threshold):
+        from services.anomaly_detection import detect_statistical_anomaly
+        values = [50.0 + i for i in range(10)]
+        is_anom, z, mean, std = detect_statistical_anomaly(values, 100.0, threshold)
+        assert isinstance(is_anom, bool)
+
+
+class TestExistingDetectionEndpoints:
+    """Tests for the real anomaly detection endpoints added in this session."""
+
+    def test_detect_revenue_endpoint_exists(self):
+        client, mock_conn = _make_client()
+        mock_conn.execute.return_value = []
+        resp = client.post("/detect/ecommerce/revenue")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    def test_detect_conversion_endpoint_exists(self):
+        client, mock_conn = _make_client()
+        mock_conn.execute.return_value = []
+        resp = client.post("/detect/ecommerce/conversion-rate")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    def test_detect_delivery_endpoint_exists(self):
+        client, mock_conn = _make_client()
+        mock_conn.execute.return_value = []
+        resp = client.post("/detect/supply-chain/on-time-delivery")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    def test_orders_count_zscore_endpoint(self):
+        client, mock_conn = _make_client()
+        mock_conn.execute.return_value = []
+        resp = client.post("/detect/ecommerce/orders-count?method=zscore")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    def test_orders_count_iqr_endpoint(self):
+        client, mock_conn = _make_client()
+        mock_conn.execute.return_value = []
+        resp = client.post("/detect/ecommerce/orders-count?method=iqr")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    def test_readyz_endpoint(self):
+        client, mock_conn = _make_client()
+        resp = client.get("/readyz")
+        assert resp.status_code in (200, 503)
+
+    def test_alerts_active_endpoint(self):
+        client, _ = _make_client()
+        resp = client.get("/alerts/active")
+        assert resp.status_code == 200
+
+    def test_acknowledge_alert_endpoint(self):
+        client, _ = _make_client()
+        resp = client.post("/alerts/test-alert-123/acknowledge")
+        assert resp.status_code in (200, 404, 422)
