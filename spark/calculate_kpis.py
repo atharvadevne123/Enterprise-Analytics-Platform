@@ -39,15 +39,17 @@ db_url = os.getenv(
 )
 
 
-def calculate_ecommerce_kpis(spark):
-    """Calculate e-commerce daily KPIs"""
-    print("Calculating e-commerce KPIs...")
+def calculate_ecommerce_kpis(spark: SparkSession) -> None:
+    """Calculate and persist e-commerce daily KPIs from fact_orders.
 
-    # Read fact and dimension tables
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Calculating e-commerce KPIs...")
+
     orders = spark.read \
         .jdbc(db_url, "public.fact_orders", db_properties)
 
-    # Group by order_date_id and calculate metrics
     metrics = orders.groupBy("order_date_id").agg(
         count("order_id").alias("total_orders"),
         count("customer_id").alias("total_customers"),
@@ -64,18 +66,20 @@ def calculate_ecommerce_kpis(spark):
         .mode("append") \
         .jdbc(db_url, "analytics.ecommerce_daily_metrics", db_properties)
 
-    print(f"✓ Calculated e-commerce KPIs for {metrics.count()} days")
+    logger.info("Calculated e-commerce KPIs for %d days", metrics.count())
 
 
-def calculate_supply_chain_kpis(spark):
-    """Calculate supply chain daily KPIs"""
-    print("Calculating supply chain KPIs...")
+def calculate_supply_chain_kpis(spark: SparkSession) -> None:
+    """Calculate and persist supply chain daily KPIs from fact_deliveries.
 
-    # Read deliveries fact
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Calculating supply chain KPIs...")
+
     deliveries = spark.read \
         .jdbc(db_url, "public.fact_deliveries", db_properties)
 
-    # Calculate metrics by delivery_date_id
     metrics = deliveries.groupBy("delivery_date_id").agg(
         count("delivery_id").alias("total_deliveries"),
         spark_sum("is_on_time").alias("on_time_deliveries"),
@@ -95,18 +99,20 @@ def calculate_supply_chain_kpis(spark):
         .mode("append") \
         .jdbc(db_url, "analytics.supply_chain_daily_metrics", db_properties)
 
-    print(f"✓ Calculated supply chain KPIs for {metrics.count()} days")
+    logger.info("Calculated supply chain KPIs for %d days", metrics.count())
 
 
-def calculate_financial_kpis(spark):
-    """Calculate financial daily KPIs"""
-    print("Calculating financial KPIs...")
+def calculate_financial_kpis(spark: SparkSession) -> None:
+    """Calculate and persist financial daily KPIs from fact_transactions.
 
-    # Read transactions and budgets
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Calculating financial KPIs...")
+
     transactions = spark.read \
         .jdbc(db_url, "public.fact_transactions", db_properties)
 
-    # Calculate daily financials
     metrics = transactions.groupBy("transaction_date_id").agg(
         spark_round(spark_sum(
             col("debit_amount")
@@ -129,22 +135,23 @@ def calculate_financial_kpis(spark):
         .mode("append") \
         .jdbc(db_url, "analytics.financial_daily_metrics", db_properties)
 
-    print(f"✓ Calculated financial KPIs for {metrics.count()} days")
+    logger.info("Calculated financial KPIs for %d days", metrics.count())
 
 
-def calculate_unified_kpis(spark):
-    """Calculate unified cross-domain KPIs"""
-    print("Calculating unified KPIs...")
+def calculate_unified_kpis(spark: SparkSession) -> None:
+    """Calculate and persist unified cross-domain KPIs.
 
-    # Read all relevant data
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Calculating unified KPIs...")
+
     deliveries = spark.read.jdbc(db_url, "public.fact_deliveries", db_properties)
 
-    # Order-to-cash cycle (simple: average delivery days)
     order_cash_cycle = deliveries.groupBy("order_date_id").agg(
         spark_round(avg("lead_time_days"), 0).alias("order_to_cash_cycle_days")
     )
 
-    # Merge all metrics
     metrics = order_cash_cycle.withColumnRenamed(
         "order_date_id",
         "date_id"
@@ -156,7 +163,7 @@ def calculate_unified_kpis(spark):
         spark_round(spark_sum("profit").over(), 2)
     ).withColumn(
         "inventory_to_sales_ratio",
-        0.0  # Would calculate from inventory and sales data
+        0.0
     ).withColumn(
         "cash_conversion_cycle_days",
         col("order_to_cash_cycle_days")
@@ -173,14 +180,17 @@ def calculate_unified_kpis(spark):
         .mode("append") \
         .jdbc(db_url, "analytics.unified_kpi_metrics", db_properties)
 
-    print(f"✓ Calculated unified KPIs for {metrics.count()} days")
+    logger.info("Calculated unified KPIs for %d days", metrics.count())
 
 
-def main():
-    """Main function"""
+def main() -> None:
+    """Entrypoint — dispatches to the domain-specific KPI calculator.
+
+    Reads the domain name from sys.argv[1].
+    """
     if len(sys.argv) < 2:
-        print("Usage: python calculate_kpis.py <domain>")
-        print("Available domains: ecommerce, supply_chain, financial, unified")
+        logger.error("Usage: python calculate_kpis.py <domain>")
+        logger.error("Available domains: ecommerce, supply_chain, financial, unified")
         sys.exit(1)
 
     domain = sys.argv[1]
@@ -195,13 +205,13 @@ def main():
         elif domain == "unified":
             calculate_unified_kpis(spark)
         else:
-            print(f"Unknown domain: {domain}")
+            logger.error("Unknown domain: %s", domain)
             sys.exit(1)
 
-        print(f"\n✓ Successfully calculated {domain} KPIs")
+        logger.info("Successfully calculated %s KPIs", domain)
 
     except Exception as e:
-        print(f"✗ Error calculating KPIs: {str(e)}")
+        logger.error("Error calculating KPIs: %s", e, exc_info=True)
         sys.exit(1)
 
     finally:
