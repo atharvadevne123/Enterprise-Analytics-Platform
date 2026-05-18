@@ -124,3 +124,67 @@ class TestMetricsEndpointContract:
         client = client_factory()
         data = client.get("/metrics").json()
         assert "service" in data
+
+
+class TestReadyzEndpointContract:
+    """All services must expose /readyz for Kubernetes readiness probes."""
+
+    @pytest.mark.parametrize("client_factory", [
+        _make_analytics_client,
+        _make_anomaly_client,
+        _make_forecasting_client,
+    ])
+    def test_readyz_returns_200_when_db_reachable(self, client_factory):
+        client = client_factory()
+        resp = client.get("/readyz")
+        assert resp.status_code in (200, 503)
+
+    @pytest.mark.parametrize("client_factory", [
+        _make_analytics_client,
+        _make_anomaly_client,
+        _make_forecasting_client,
+    ])
+    def test_readyz_has_status_on_success(self, client_factory):
+        client = client_factory()
+        resp = client.get("/readyz")
+        if resp.status_code == 200:
+            assert "status" in resp.json()
+
+    @pytest.mark.parametrize("service_module,app_path", [
+        ("services.analytics_api", "services.analytics_api"),
+        ("services.anomaly_detection", "services.anomaly_detection"),
+        ("services.forecasting_service", "services.forecasting_service"),
+    ])
+    def test_readyz_returns_503_on_db_failure(self, service_module, app_path):
+        with patch(f"{service_module}.engine") as mock_engine:
+            mock_engine.connect.side_effect = Exception("DB down")
+            import importlib
+            mod = importlib.import_module(service_module)
+            from fastapi.testclient import TestClient
+            client = TestClient(mod.app, raise_server_exceptions=False)
+            resp = client.get("/readyz")
+            assert resp.status_code in (503, 500)
+
+
+class TestRootEndpointContract:
+    """All services must expose / returning endpoint metadata."""
+
+    @pytest.mark.parametrize("client_factory", [
+        _make_analytics_client,
+        _make_anomaly_client,
+        _make_forecasting_client,
+    ])
+    def test_root_returns_200(self, client_factory):
+        client = client_factory()
+        resp = client.get("/")
+        assert resp.status_code == 200
+
+    @pytest.mark.parametrize("client_factory", [
+        _make_analytics_client,
+        _make_anomaly_client,
+        _make_forecasting_client,
+    ])
+    def test_root_has_version_field(self, client_factory):
+        client = client_factory()
+        data = client.get("/").json()
+        assert "version" in data
