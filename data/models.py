@@ -66,6 +66,8 @@ class CustomerSegment(str, Enum):
 # ============================================================================
 
 class Product(BaseAnalyticsModel):
+    """Product catalogue entry used across e-commerce and supply-chain domains."""
+
     product_id: int
     product_name: str
     category: str
@@ -80,7 +82,10 @@ class Product(BaseAnalyticsModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class Customer(BaseAnalyticsModel):
+    """Customer record with segmentation and lifetime value tracking."""
+
     customer_id: int
     customer_name: str
     email: Optional[str] = None
