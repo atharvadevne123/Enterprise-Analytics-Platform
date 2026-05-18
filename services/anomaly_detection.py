@@ -40,7 +40,15 @@ DB_URL = os.getenv(
     "postgresql://postgres:password@localhost:5432/analytics_warehouse"
 )
 
-engine = create_engine(DB_URL, pool_size=20)
+
+def _make_engine(url: str):
+    """Create a SQLAlchemy engine appropriate for the dialect."""
+    if url.startswith("sqlite"):
+        return create_engine(url, connect_args={"check_same_thread": False})
+    return create_engine(url, pool_size=20)
+
+
+engine = _make_engine(DB_URL)
 
 
 # Response models
