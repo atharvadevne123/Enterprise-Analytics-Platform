@@ -38,23 +38,28 @@ db_url = os.getenv(
 )
 
 
-def load_orders_fact(spark):
-    """Load orders fact table"""
-    print("Loading orders fact table...")
+def _to_date_id(col_name: str):
+    """Return a Spark column expression converting a date column to YYYYMMDD int."""
+    return spark_round(
+        col(col_name).cast("date").cast("string").regexp_replace("-", "").cast("int")
+    )
 
-    # Read staging data
+
+def load_orders_fact(spark: SparkSession) -> None:
+    """Load the orders fact table from staging.stg_orders.
+
+    Adds derived columns: gross_profit, gross_margin_pct, and warehouse timestamps.
+
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Loading orders fact table...")
+
     orders = spark.read \
         .jdbc(db_url, "staging.stg_orders", db_properties)
 
-    # Convert order_date to date_id format
-    orders = orders.withColumn(
-        "order_date_id",
-        spark_round(
-            col("order_date").cast("date").cast("string").regexp_replace("-", "").cast("int")
-        )
-    )
+    orders = orders.withColumn("order_date_id", _to_date_id("order_date"))
 
-    # Calculate derived metrics
     orders = orders.withColumn(
         "gross_profit",
         col("order_amount") - col("cost_amount")
@@ -62,59 +67,44 @@ def load_orders_fact(spark):
         "gross_margin_pct",
         spark_round((col("gross_profit") / col("order_amount")) * 100, 2)
     ).withColumn(
-        "dw_created_at",
-        current_timestamp()
+        "dw_created_at", current_timestamp()
     ).withColumn(
-        "dw_updated_at",
-        current_timestamp()
+        "dw_updated_at", current_timestamp()
     )
 
-    # Select required columns
     fact_columns = [
         "order_id", "order_date_id", "customer_id", "product_id",
         "supplier_id", "quantity", "list_price", "discount_amount",
         "order_amount", "tax_amount", "shipping_amount", "total_amount",
         "cost_amount", "gross_profit", "gross_margin_pct",
         "order_status", "payment_status", "shipping_status",
-        "created_at", "dw_created_at", "dw_updated_at"
+        "created_at", "dw_created_at", "dw_updated_at",
     ]
 
-    orders = orders.select(*fact_columns)
-
-    orders.write \
+    orders.select(*fact_columns).write \
         .mode("append") \
         .jdbc(db_url, "public.fact_orders", db_properties)
 
-    print(f"✓ Loaded {orders.count()} orders")
+    logger.info("Loaded %d orders", orders.count())
 
 
-def load_deliveries_fact(spark):
-    """Load deliveries fact table"""
-    print("Loading deliveries fact table...")
+def load_deliveries_fact(spark: SparkSession) -> None:
+    """Load the deliveries fact table from staging.stg_deliveries.
 
-    # Read staging data
+    Adds lead_time_days and is_on_time derived columns.
+
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Loading deliveries fact table...")
+
     deliveries = spark.read \
         .jdbc(db_url, "staging.stg_deliveries", db_properties)
 
-    # Convert dates to date_id format
-    deliveries = deliveries.withColumn(
-        "order_date_id",
-        spark_round(
-            col("order_date").cast("date").cast("string").regexp_replace("-", "").cast("int")
-        )
-    ).withColumn(
-        "delivery_date_id",
-        spark_round(
-            col("delivery_date").cast("date").cast("string").regexp_replace("-", "").cast("int")
-        )
-    ).withColumn(
-        "promised_date_id",
-        spark_round(
-            col("promised_date").cast("date").cast("string").regexp_replace("-", "").cast("int")
-        )
-    )
+    deliveries = deliveries.withColumn("order_date_id", _to_date_id("order_date")) \
+        .withColumn("delivery_date_id", _to_date_id("delivery_date")) \
+        .withColumn("promised_date_id", _to_date_id("promised_date"))
 
-    # Calculate lead time
     deliveries = deliveries.withColumn(
         "lead_time_days",
         (col("delivery_date").cast("date") - col("order_date").cast("date"))
@@ -122,106 +112,87 @@ def load_deliveries_fact(spark):
         "is_on_time",
         col("delivery_date") <= col("promised_date")
     ).withColumn(
-        "dw_created_at",
-        current_timestamp()
+        "dw_created_at", current_timestamp()
     ).withColumn(
-        "dw_updated_at",
-        current_timestamp()
+        "dw_updated_at", current_timestamp()
     )
 
-    # Select required columns
     fact_columns = [
         "delivery_id", "po_id", "supplier_id", "product_id",
         "order_date_id", "delivery_date_id", "promised_date_id",
         "quantity_ordered", "quantity_delivered", "quantity_rejected",
         "unit_cost", "total_cost", "lead_time_days",
         "is_on_time", "is_quality_pass", "delivery_status",
-        "created_at", "dw_created_at", "dw_updated_at"
+        "created_at", "dw_created_at", "dw_updated_at",
     ]
 
-    deliveries = deliveries.select(*fact_columns)
-
-    deliveries.write \
+    deliveries.select(*fact_columns).write \
         .mode("append") \
         .jdbc(db_url, "public.fact_deliveries", db_properties)
 
-    print(f"✓ Loaded {deliveries.count()} deliveries")
+    logger.info("Loaded %d deliveries", deliveries.count())
 
 
-def load_transactions_fact(spark):
-    """Load transactions fact table"""
-    print("Loading transactions fact table...")
+def load_transactions_fact(spark: SparkSession) -> None:
+    """Load the transactions fact table from staging.stg_transactions.
 
-    # Read staging data
+    Adds net_amount and warehouse timestamp columns.
+
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Loading transactions fact table...")
+
     transactions = spark.read \
         .jdbc(db_url, "staging.stg_transactions", db_properties)
 
-    # Convert transaction_date to date_id
     transactions = transactions.withColumn(
-        "transaction_date_id",
-        spark_round(
-            col("transaction_date").cast("date").cast("string").regexp_replace("-", "").cast("int")
-        )
+        "transaction_date_id", _to_date_id("transaction_date")
     ).withColumn(
         "net_amount",
         col("debit_amount") - col("credit_amount")
     ).withColumn(
-        "dw_created_at",
-        current_timestamp()
+        "dw_created_at", current_timestamp()
     ).withColumn(
-        "dw_updated_at",
-        current_timestamp()
+        "dw_updated_at", current_timestamp()
     )
 
-    # Select required columns
     fact_columns = [
         "transaction_id", "transaction_date_id", "gl_account_id",
         "debit_amount", "credit_amount", "net_amount",
         "transaction_type", "description", "reference_id",
         "currency_code", "exchange_rate",
         "is_intercompany", "is_reconciled",
-        "created_at", "dw_created_at", "dw_updated_at"
+        "created_at", "dw_created_at", "dw_updated_at",
     ]
 
-    transactions = transactions.select(*fact_columns)
-
-    transactions.write \
+    transactions.select(*fact_columns).write \
         .mode("append") \
         .jdbc(db_url, "public.fact_transactions", db_properties)
 
-    print(f"✓ Loaded {transactions.count()} transactions")
+    logger.info("Loaded %d transactions", transactions.count())
 
 
-def load_budget_actuals_fact(spark):
-    """Load budget vs actuals fact table"""
-    print("Loading budget vs actuals fact table...")
+def load_budget_actuals_fact(spark: SparkSession) -> None:
+    """Load the budget vs actuals fact table by joining staging budgets and actuals.
 
-    # Read budgets and actuals
+    Calculates variance_amount and variance_pct derived columns.
+
+    Args:
+        spark: Active SparkSession to use for reading/writing data.
+    """
+    logger.info("Loading budget vs actuals fact table...")
+
     budgets = spark.read \
-        .jdbc(db_url, "staging.stg_budgets", db_properties)
+        .jdbc(db_url, "staging.stg_budgets", db_properties) \
+        .withColumn("date_id", _to_date_id("budget_date"))
 
     actuals = spark.read \
-        .jdbc(db_url, "staging.stg_actuals", db_properties)
-
-    # Join budgets and actuals
-    budgets = budgets.withColumn(
-        "date_id",
-        spark_round(
-            col("budget_date").cast("date").cast("string").regexp_replace("-", "").cast("int")
-        )
-    )
-
-    actuals = actuals.withColumn(
-        "date_id",
-        spark_round(
-            col("actual_date").cast("date").cast("string").regexp_replace("-", "").cast("int")
-        )
-    )
+        .jdbc(db_url, "staging.stg_actuals", db_properties) \
+        .withColumn("date_id", _to_date_id("actual_date"))
 
     budget_actuals = budgets.join(
-        actuals,
-        on=["gl_account_id", "date_id"],
-        how="full"
+        actuals, on=["gl_account_id", "date_id"], how="full"
     ).withColumn(
         "variance_amount",
         col("actual_amount") - col("budget_amount")
@@ -229,25 +200,26 @@ def load_budget_actuals_fact(spark):
         "variance_pct",
         spark_round((col("variance_amount") / col("budget_amount")) * 100, 2)
     ).withColumn(
-        "dw_created_at",
-        current_timestamp()
+        "dw_created_at", current_timestamp()
     ).withColumn(
-        "dw_updated_at",
-        current_timestamp()
+        "dw_updated_at", current_timestamp()
     )
 
     budget_actuals.write \
         .mode("append") \
         .jdbc(db_url, "public.fact_budget_actuals", db_properties)
 
-    print(f"✓ Loaded {budget_actuals.count()} budget vs actuals records")
+    logger.info("Loaded %d budget vs actuals records", budget_actuals.count())
 
 
-def main():
-    """Main function"""
+def main() -> None:
+    """Entrypoint — dispatches to the fact-specific loader.
+
+    Reads the fact table name from sys.argv[1].
+    """
     if len(sys.argv) < 2:
-        print("Usage: python load_facts.py <fact_name>")
-        print("Available facts: orders, deliveries, transactions, budget_actuals")
+        logger.error("Usage: python load_facts.py <fact_name>")
+        logger.error("Available facts: orders, deliveries, transactions, budget_actuals")
         sys.exit(1)
 
     fact = sys.argv[1]
@@ -262,13 +234,13 @@ def main():
         elif fact == "budget_actuals":
             load_budget_actuals_fact(spark)
         else:
-            print(f"Unknown fact: {fact}")
+            logger.error("Unknown fact: %s", fact)
             sys.exit(1)
 
-        print(f"\n✓ Successfully loaded {fact} fact table")
+        logger.info("Successfully loaded %s fact table", fact)
 
     except Exception as e:
-        print(f"✗ Error loading {fact}: {str(e)}")
+        logger.error("Error loading %s: %s", fact, e, exc_info=True)
         sys.exit(1)
 
     finally:
