@@ -19,12 +19,30 @@ from pathlib import Path
 
 
 def _dates(n: int, end: date | None = None) -> list[str]:
+    """Generate a sorted list of ISO date strings ending at *end*.
+
+    Args:
+        n: Number of dates to generate.
+        end: Inclusive end date (defaults to today).
+
+    Returns:
+        List of ISO-8601 date strings in ascending order.
+    """
     if end is None:
         end = date.today()
     return [(end - timedelta(days=i)).isoformat() for i in range(n - 1, -1, -1)]
 
 
 def write_ecommerce(out_dir: Path, rows: int) -> Path:
+    """Write synthetic e-commerce daily metrics CSV.
+
+    Args:
+        out_dir: Directory where the file will be written.
+        rows: Number of data rows to generate.
+
+    Returns:
+        Path to the written CSV file.
+    """
     path = out_dir / "ecommerce_daily_metrics.csv"
     fieldnames = [
         "date", "total_orders", "total_customers", "total_revenue",
@@ -49,6 +67,15 @@ def write_ecommerce(out_dir: Path, rows: int) -> Path:
 
 
 def write_supply_chain(out_dir: Path, rows: int) -> Path:
+    """Write synthetic supply-chain daily metrics CSV.
+
+    Args:
+        out_dir: Directory where the file will be written.
+        rows: Number of data rows to generate.
+
+    Returns:
+        Path to the written CSV file.
+    """
     path = out_dir / "supply_chain_daily_metrics.csv"
     fieldnames = [
         "date", "total_deliveries", "on_time_delivery_pct",
@@ -69,6 +96,15 @@ def write_supply_chain(out_dir: Path, rows: int) -> Path:
 
 
 def write_financial(out_dir: Path, rows: int) -> Path:
+    """Write synthetic financial daily metrics CSV.
+
+    Args:
+        out_dir: Directory where the file will be written.
+        rows: Number of data rows to generate.
+
+    Returns:
+        Path to the written CSV file.
+    """
     path = out_dir / "financial_daily_metrics.csv"
     fieldnames = [
         "date", "total_revenue", "total_expense", "net_income", "gross_margin_pct",
