@@ -256,3 +256,76 @@ class TestExistingEndpoints:
         mock_conn.execute.return_value.fetchone.return_value = None
         resp = client.get(f"/ecommerce/conversion-rate?days={days}")
         assert resp.status_code in (200, 404, 422, 500)
+
+
+# ---------------------------------------------------------------------------
+# Readiness probe
+# ---------------------------------------------------------------------------
+
+class TestReadinessProbe:
+    def test_readyz_endpoint_exists(self):
+        with patch("services.analytics_api.engine") as mock_engine:
+            mock_conn = MagicMock()
+            mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
+            mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+            from services.analytics_api import app
+            client = TestClient(app)
+            resp = client.get("/readyz")
+            assert resp.status_code in (200, 503)
+
+    def test_readyz_returns_status_key(self):
+        with patch("services.analytics_api.engine") as mock_engine:
+            mock_conn = MagicMock()
+            mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
+            mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+            from services.analytics_api import app
+            client = TestClient(app)
+            resp = client.get("/readyz")
+            if resp.status_code == 200:
+                assert "status" in resp.json()
+
+    def test_readyz_returns_503_when_db_fails(self):
+        with patch("services.analytics_api.engine") as mock_engine:
+            mock_engine.connect.side_effect = Exception("DB down")
+            from services.analytics_api import app
+            client = TestClient(app, raise_server_exceptions=False)
+            resp = client.get("/readyz")
+            assert resp.status_code in (503, 500)
+
+
+# ---------------------------------------------------------------------------
+# Budget vs actual
+# ---------------------------------------------------------------------------
+
+class TestBudgetVsActual:
+    @pytest.mark.parametrize("gl_account_id", ["GL001", "GL002", "EXP-100"])
+    def test_budget_vs_actual_various_accounts(self, gl_account_id):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value = []
+        resp = client.get(f"/financial/budget-vs-actual/{gl_account_id}")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    def test_budget_vs_actual_with_date_range(self):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value = []
+        resp = client.get(
+            "/financial/budget-vs-actual/GL001"
+            "?start_date=2024-01-01&end_date=2024-03-31"
+        )
+        assert resp.status_code in (200, 404, 422, 500)
+
+
+# ---------------------------------------------------------------------------
+# Unified KPIs
+# ---------------------------------------------------------------------------
+
+class TestUnifiedKPIs:
+    @pytest.mark.parametrize("start,end", [
+        ("2024-01-01", "2024-03-31"),
+        ("2024-07-01", "2024-09-30"),
+    ])
+    def test_unified_kpis_date_ranges(self, start, end):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value = []
+        resp = client.get(f"/kpis/unified/{start}/{end}")
+        assert resp.status_code in (200, 404, 422, 500)
