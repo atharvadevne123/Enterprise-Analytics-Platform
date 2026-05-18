@@ -38,8 +38,11 @@ dag = DAG(
 )
 
 
-def validate_orders_table():
-    """Validate orders data quality"""
+def validate_orders_table() -> None:
+    """Validate orders data quality — raises ValueError on failures.
+
+    Checks staging.stg_orders for null primary keys and negative amounts.
+    """
     import pandas as pd
     from sqlalchemy import create_engine
 
@@ -70,8 +73,12 @@ def validate_orders_table():
         raise ValueError(f"Data quality check failed: Nulls={nulls}, Negatives={negatives}")
 
 
-def validate_deliveries_table():
-    """Validate deliveries data quality"""
+def validate_deliveries_table() -> None:
+    """Validate deliveries data quality — raises ValueError on over-deliveries.
+
+    Checks staging.stg_deliveries for rows where quantity_delivered exceeds
+    quantity_ordered.
+    """
     import pandas as pd
     from sqlalchemy import create_engine
 
@@ -98,8 +105,11 @@ def validate_deliveries_table():
         raise ValueError(f"Delivery validation failed: Over-deliveries={over_deliveries}")
 
 
-def validate_transactions_table():
-    """Validate financial transactions data quality"""
+def validate_transactions_table() -> None:
+    """Validate financial transactions data quality — raises ValueError on zero-amount rows.
+
+    Checks staging.stg_transactions for rows where both debit and credit are zero.
+    """
     import pandas as pd
     from sqlalchemy import create_engine
 

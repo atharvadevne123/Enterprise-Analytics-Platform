@@ -39,8 +39,12 @@ dag = DAG(
 )
 
 
-def load_etl_audit():
-    """Log ETL start"""
+def load_etl_audit() -> None:
+    """Insert an ETL audit record to track batch run start times.
+
+    Reads DATABASE_URL from Airflow variables and inserts an IN_PROGRESS
+    record into public.dw_load_audit.
+    """
     from datetime import datetime
 
     from sqlalchemy import create_engine, text
@@ -56,11 +60,11 @@ def load_etl_audit():
             VALUES (:process, :source, :table, :status, :start_time)
             """),
             {
-                'process': 'etl_batch_processing',
-                'source': 'kafka_staging',
-                'table': 'all_tables',
-                'status': 'IN_PROGRESS',
-                'start_time': datetime.utcnow()
+                "process": "etl_batch_processing",
+                "source": "kafka_staging",
+                "table": "all_tables",
+                "status": "IN_PROGRESS",
+                "start_time": datetime.utcnow(),
             }
         )
         conn.commit()
