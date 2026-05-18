@@ -184,8 +184,6 @@ class DeliveryEvent(BaseAnalyticsModel):
 # ============================================================================
 
 class GLAccount(BaseAnalyticsModel):
-    """General ledger account definition for the chart of accounts."""
-
     gl_account_id: str
     account_name: str
     account_type: str  # Asset, Liability, Equity, Revenue, Expense
@@ -198,8 +196,7 @@ class GLAccount(BaseAnalyticsModel):
 
 
 class TransactionEvent(BaseAnalyticsModel):
-    """Financial transaction event published to Kafka topic financials.transactions."""
-
+    """Financial transaction event (Kafka topic: financials.transactions)"""
     transaction_id: int
     gl_account_id: str
     debit_amount: Decimal = Decimal("0.00")
@@ -215,8 +212,7 @@ class TransactionEvent(BaseAnalyticsModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class BudgetEvent(BaseAnalyticsModel):
-    """Budget allocation event published to Kafka topic financials.budgets."""
-
+    """Budget event (Kafka topic: financials.budgets)"""
     budget_id: int
     gl_account_id: str
     budget_amount: Decimal
@@ -228,8 +224,7 @@ class BudgetEvent(BaseAnalyticsModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class ActualEvent(BaseAnalyticsModel):
-    """Realized financial amount event published to Kafka topic financials.actuals."""
-
+    """Actual financial event (Kafka topic: financials.actuals)"""
     actual_id: int
     gl_account_id: str
     actual_amount: Decimal
@@ -241,7 +236,8 @@ class ActualEvent(BaseAnalyticsModel):
 # ============================================================================
 
 class ECommerceMetrics(BaseAnalyticsModel):
-    """Daily e-commerce KPI metrics"""
+    """Daily aggregate KPI metrics for the e-commerce domain."""
+
     date: datetime
     total_orders: int
     total_customers: int
@@ -256,7 +252,8 @@ class ECommerceMetrics(BaseAnalyticsModel):
     refunded_amount: Decimal = Decimal("0.00")
 
 class SupplyChainMetrics(BaseAnalyticsModel):
-    """Daily supply chain KPI metrics"""
+    """Daily aggregate KPI metrics for the supply chain domain."""
+
     date: datetime
     total_deliveries: int
     on_time_deliveries: int
@@ -268,7 +265,8 @@ class SupplyChainMetrics(BaseAnalyticsModel):
     delayed_deliveries: int = 0
 
 class FinancialMetrics(BaseAnalyticsModel):
-    """Daily financial KPI metrics"""
+    """Daily aggregate KPI metrics for the financial domain."""
+
     date: datetime
     total_revenue: Decimal
     total_expense: Decimal
@@ -281,7 +279,8 @@ class FinancialMetrics(BaseAnalyticsModel):
     accounts_payable: Decimal = Decimal("0.00")
 
 class UnifiedKPIMetrics(BaseAnalyticsModel):
-    """Unified cross-domain KPI metrics"""
+    """Cross-domain KPI metrics combining e-commerce, supply chain, and finance."""
+
     date: datetime
     revenue_per_supplier: Decimal
     profit_per_product: Decimal
@@ -296,7 +295,8 @@ class UnifiedKPIMetrics(BaseAnalyticsModel):
 # ============================================================================
 
 class AnomalyAlert(BaseAnalyticsModel):
-    """Anomaly detected in metrics"""
+    """Alert raised when a metric deviates beyond acceptable bounds."""
+
     alert_id: str
     severity: str  # CRITICAL, WARNING, INFO
     domain: str  # ecommerce, supply_chain, financial
@@ -315,7 +315,8 @@ class AnomalyAlert(BaseAnalyticsModel):
 # ============================================================================
 
 class DemandForecast(BaseAnalyticsModel):
-    """Product demand forecast"""
+    """ML-generated product demand forecast for inventory planning."""
+
     forecast_id: str
     product_id: int
     forecast_date: datetime
@@ -326,7 +327,8 @@ class DemandForecast(BaseAnalyticsModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class LeadTimeForecast(BaseAnalyticsModel):
-    """Supplier lead time forecast"""
+    """Statistical lead time forecast for supplier delivery planning."""
+
     forecast_id: str
     supplier_id: int
     forecast_date: datetime
@@ -336,7 +338,8 @@ class LeadTimeForecast(BaseAnalyticsModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class CashFlowForecast(BaseAnalyticsModel):
-    """Financial cash flow forecast"""
+    """Regression-based cash flow forecast for financial planning."""
+
     forecast_id: str
     forecast_date: datetime
     forecast_horizon_days: int
