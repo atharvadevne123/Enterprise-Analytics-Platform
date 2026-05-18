@@ -165,20 +165,22 @@ class UnifiedConsumer:
 
         return message_count
 
-    def close(self):
-        """Close the consumer"""
+    def close(self) -> None:
+        """Close the consumer and release resources."""
         self.consumer.close()
         logger.info("Consumer closed")
 
 
 class MultiTopicConsumer:
-    """Consumer for multiple Kafka topics"""
+    """Consumer for multiple Kafka topics."""
 
-    def __init__(self,
-                 topics: list,
-                 broker_urls: list = None,
-                 group_id: str = "unified-analytics",
-                 auto_offset_reset: str = "earliest"):
+    def __init__(
+        self,
+        topics: List[str],
+        broker_urls: Optional[List[str]] = None,
+        group_id: str = "unified-analytics",
+        auto_offset_reset: str = "earliest",
+    ) -> None:
         """
         Initialize multi-topic consumer
 
@@ -209,15 +211,19 @@ class MultiTopicConsumer:
 
         logger.info(f"Multi-topic consumer initialized for topics: {topics}")
 
-    def consume_messages(self,
-                        message_handler: Callable,
-                        timeout_ms: int = 1000):
-        """
-        Consume messages from all subscribed topics
+    def consume_messages(
+        self,
+        message_handler: Callable[..., None],
+        timeout_ms: int = 1000,
+    ) -> int:
+        """Consume messages from all subscribed topics.
 
         Args:
-            message_handler: Callback function(message, topic, partition)
-            timeout_ms: Timeout for message polling
+            message_handler: Callback function(message, topic, partition).
+            timeout_ms: Timeout for message polling in milliseconds.
+
+        Returns:
+            Total number of messages processed.
         """
         message_count = 0
 
@@ -255,8 +261,8 @@ class MultiTopicConsumer:
 
         return message_count
 
-    def close(self):
-        """Close the consumer"""
+    def close(self) -> None:
+        """Close the consumer and release resources."""
         self.consumer.close()
         logger.info("Multi-topic consumer closed")
 
