@@ -157,7 +157,10 @@ def root() -> Dict[str, Any]:
             "/financial/metrics/{start_date}/{end_date}",
             "/financial/budget-vs-actual/{gl_account_id}",
             "/kpis/unified/{start_date}/{end_date}",
-            "/kpis/summary"
+            "/kpis/summary",
+            "/ecommerce/top-products",
+            "/supply-chain/inventory-risk",
+            "/financial/cash-position"
         ]
     }
 
@@ -531,6 +534,121 @@ def get_kpi_summary() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error fetching KPI summary: {e}")
         raise HTTPException(status_code=500, detail="Error fetching summary")
+
+
+
+@app.get("/ecommerce/top-products")
+def get_top_products(
+    days: int = Query(30, ge=1, le=365),
+    limit: int = Query(10, ge=1, le=100),
+) -> Dict[str, Any]:
+    """Return the top N products by total revenue over the last N days."""
+    try:
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=days)
+
+        with engine.connect() as conn:
+            query = text("""
+                SELECT
+                    fo.product_id,
+                    dp.product_name,
+                    dp.category,
+                    SUM(fo.total_amount) AS total_revenue,
+                    SUM(fo.quantity) AS total_units
+                FROM public.fact_orders fo
+                JOIN public.dim_products dp ON fo.product_id = dp.product_id
+                WHERE fo.order_date_id BETWEEN :start_id AND :end_id
+                  AND fo.order_status != 'cancelled'
+                GROUP BY fo.product_id, dp.product_name, dp.category
+                ORDER BY total_revenue DESC
+                LIMIT :limit
+            """)
+            start_id = int(start_date.strftime("%Y%m%d"))
+            end_id = int(end_date.strftime("%Y%m%d"))
+            result = conn.execute(query, {"start_id": start_id, "end_id": end_id, "limit": limit})
+            rows = [dict(r._mapping) for r in result]
+            return {"period_days": days, "limit": limit, "products": rows}
+
+    except Exception as e:
+        logger.error("Error fetching top products: %s", e)
+        raise HTTPException(status_code=500, detail="Error fetching top products")
+
+
+@app.get("/supply-chain/inventory-risk")
+def get_inventory_risk(
+    threshold_pct: float = Query(20.0, ge=0.0, le=100.0),
+) -> Dict[str, Any]:
+    """Return products whose stock level is within threshold_pct of reorder point."""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                SELECT
+                    product_id,
+                    product_name,
+                    category,
+                    current_stock_level,
+                    reorder_point,
+                    lead_time_days,
+                    CASE
+                        WHEN current_stock_level <= reorder_point THEN 'CRITICAL'
+                        WHEN current_stock_level <= reorder_point * (1 + :threshold / 100.0) THEN 'WARNING'
+                        ELSE 'OK'
+                    END AS risk_level
+                FROM public.dim_products
+                WHERE is_active = true
+                  AND current_stock_level <= reorder_point * (1 + :threshold / 100.0)
+                ORDER BY risk_level, current_stock_level ASC
+            """)
+            result = conn.execute(query, {"threshold": threshold_pct})
+            rows = [dict(r._mapping) for r in result]
+            critical = sum(1 for r in rows if r.get("risk_level") == "CRITICAL")
+            warning = sum(1 for r in rows if r.get("risk_level") == "WARNING")
+            return {
+                "threshold_pct": threshold_pct,
+                "total_at_risk": len(rows),
+                "critical_count": critical,
+                "warning_count": warning,
+                "products": rows,
+            }
+
+    except Exception as e:
+        logger.error("Error fetching inventory risk: %s", e)
+        raise HTTPException(status_code=500, detail="Error fetching inventory risk")
+
+
+@app.get("/financial/cash-position")
+def get_cash_position(
+    as_of_date: Optional[date] = None,
+) -> Dict[str, Any]:
+    """Return current cash position by summing debit and credit balances on cash GL accounts."""
+    if not as_of_date:
+        as_of_date = datetime.now().date()
+
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                SELECT
+                    SUM(debit_amount) AS total_debits,
+                    SUM(credit_amount) AS total_credits,
+                    SUM(debit_amount) - SUM(credit_amount) AS net_position
+                FROM public.fact_transactions ft
+                JOIN public.dim_gl_accounts ga ON ft.gl_account_id = ga.gl_account_id
+                WHERE ga.account_type = 'Asset'
+                  AND ga.account_subtype = 'Cash'
+                  AND ft.transaction_date_id <= :as_of_id
+            """)
+            as_of_id = int(as_of_date.strftime("%Y%m%d"))
+            result = conn.execute(query, {"as_of_id": as_of_id}).fetchone()
+            return {
+                "as_of_date": as_of_date,
+                "total_debits": float(result[0] or 0),
+                "total_credits": float(result[1] or 0),
+                "net_cash_position": float(result[2] or 0),
+            }
+
+    except Exception as e:
+        logger.error("Error fetching cash position: %s", e)
+        raise HTTPException(status_code=500, detail="Error fetching cash position")
 
 
 if __name__ == "__main__":
