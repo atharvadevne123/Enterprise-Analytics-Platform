@@ -98,6 +98,7 @@ class CashFlowForecast(BaseModel):
 # Root
 @app.get("/")
 def root() -> Dict[str, Any]:
+    """Return service metadata and available endpoint list."""
     return {
         "service": "forecasting-service",
         "version": "1.0.0",
@@ -141,9 +142,9 @@ def metrics() -> Dict[str, Any]:
 @app.get("/forecast/demand/{product_id}")
 def forecast_demand(
     product_id: int,
-    horizon_days: int = Query(30, ge=1, le=365)
-):
-    """Forecast product demand for next N days"""
+    horizon_days: int = Query(30, ge=1, le=365),
+) -> Dict[str, Any]:
+    """Forecast product demand for next N days using linear regression."""
     try:
         with engine.connect() as conn:
             # Get historical order data
