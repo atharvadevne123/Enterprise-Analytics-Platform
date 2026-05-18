@@ -20,22 +20,34 @@ line-length = 120
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I"]
-ignore = ["E501"]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501", "B008", "SIM117"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["services", "kafka", "data", "spark"]
+known-first-party = ["services", "messaging", "data", "spark", "airflow"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--tb=short -v"
-filterwarnings = ["ignore::DeprecationWarning"]
+addopts = "--tb=short -v --strict-markers"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m not integration')",
+    "slow: marks tests as slow (deselect with '-m not slow')",
+]
 
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true
 warn_return_any = false
 no_error_summary = true
+check_untyped_defs = true
+disallow_incomplete_defs = true
