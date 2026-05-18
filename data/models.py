@@ -236,8 +236,7 @@ class ActualEvent(BaseAnalyticsModel):
 # ============================================================================
 
 class ECommerceMetrics(BaseAnalyticsModel):
-    """Daily aggregate KPI metrics for the e-commerce domain."""
-
+    """Daily e-commerce KPI metrics"""
     date: datetime
     total_orders: int
     total_customers: int
@@ -252,8 +251,7 @@ class ECommerceMetrics(BaseAnalyticsModel):
     refunded_amount: Decimal = Decimal("0.00")
 
 class SupplyChainMetrics(BaseAnalyticsModel):
-    """Daily aggregate KPI metrics for the supply chain domain."""
-
+    """Daily supply chain KPI metrics"""
     date: datetime
     total_deliveries: int
     on_time_deliveries: int
@@ -265,8 +263,7 @@ class SupplyChainMetrics(BaseAnalyticsModel):
     delayed_deliveries: int = 0
 
 class FinancialMetrics(BaseAnalyticsModel):
-    """Daily aggregate KPI metrics for the financial domain."""
-
+    """Daily financial KPI metrics"""
     date: datetime
     total_revenue: Decimal
     total_expense: Decimal
@@ -279,8 +276,7 @@ class FinancialMetrics(BaseAnalyticsModel):
     accounts_payable: Decimal = Decimal("0.00")
 
 class UnifiedKPIMetrics(BaseAnalyticsModel):
-    """Cross-domain KPI metrics combining e-commerce, supply chain, and finance."""
-
+    """Unified cross-domain KPI metrics"""
     date: datetime
     revenue_per_supplier: Decimal
     profit_per_product: Decimal
@@ -295,8 +291,7 @@ class UnifiedKPIMetrics(BaseAnalyticsModel):
 # ============================================================================
 
 class AnomalyAlert(BaseAnalyticsModel):
-    """Alert raised when a metric deviates beyond acceptable bounds."""
-
+    """Anomaly detected in metrics"""
     alert_id: str
     severity: str  # CRITICAL, WARNING, INFO
     domain: str  # ecommerce, supply_chain, financial
@@ -315,8 +310,7 @@ class AnomalyAlert(BaseAnalyticsModel):
 # ============================================================================
 
 class DemandForecast(BaseAnalyticsModel):
-    """ML-generated product demand forecast for inventory planning."""
-
+    """Product demand forecast"""
     forecast_id: str
     product_id: int
     forecast_date: datetime
@@ -327,8 +321,7 @@ class DemandForecast(BaseAnalyticsModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class LeadTimeForecast(BaseAnalyticsModel):
-    """Statistical lead time forecast for supplier delivery planning."""
-
+    """Supplier lead time forecast"""
     forecast_id: str
     supplier_id: int
     forecast_date: datetime
@@ -338,8 +331,7 @@ class LeadTimeForecast(BaseAnalyticsModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class CashFlowForecast(BaseAnalyticsModel):
-    """Regression-based cash flow forecast for financial planning."""
-
+    """Financial cash flow forecast"""
     forecast_id: str
     forecast_date: datetime
     forecast_horizon_days: int
@@ -349,3 +341,38 @@ class CashFlowForecast(BaseAnalyticsModel):
     confidence_level: Decimal
     model_version: str
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+# ============================================================================
+# REQUEST MODELS
+# ============================================================================
+
+class ForecastConfig(BaseAnalyticsModel):
+    """Configuration parameters for a forecast run."""
+
+    product_id: Optional[int] = None
+    supplier_id: Optional[int] = None
+    horizon_days: int = Field(default=30, ge=1, le=365)
+    model_type: str = Field(default="linear_regression")
+    confidence_threshold: Decimal = Field(default=Decimal("0.70"))
+    include_bounds: bool = True
+
+
+class AnomalyDetectionConfig(BaseAnalyticsModel):
+    """Configuration for anomaly detection runs."""
+
+    metric_name: str
+    domain: str
+    method: str = Field(default="zscore")
+    sensitivity: Decimal = Field(default=Decimal("2.0"))
+    lookback_days: int = Field(default=30, ge=7, le=365)
+    alert_on_detect: bool = True
+
+
+class DateRangeFilter(BaseAnalyticsModel):
+    """Generic date range filter for analytics queries."""
+
+    start_date: datetime
+    end_date: datetime
+    granularity: str = Field(default="daily")
+    limit: int = Field(default=100, ge=1, le=1000)
+    offset: int = Field(default=0, ge=0)
