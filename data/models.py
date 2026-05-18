@@ -132,8 +132,6 @@ class InventoryEvent(BaseAnalyticsModel):
 # ============================================================================
 
 class Supplier(BaseAnalyticsModel):
-    """Supplier master record with performance metrics and contract details."""
-
     supplier_id: int
     supplier_name: str
     country: str
@@ -149,8 +147,7 @@ class Supplier(BaseAnalyticsModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class PurchaseOrderEvent(BaseAnalyticsModel):
-    """Purchase order event published to Kafka topic supply_chain.purchase_orders."""
-
+    """Purchase order event (Kafka topic: supply_chain.purchase_orders)"""
     po_id: int
     supplier_id: int
     product_id: int
@@ -163,8 +160,7 @@ class PurchaseOrderEvent(BaseAnalyticsModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class DeliveryEvent(BaseAnalyticsModel):
-    """Delivery confirmation event published to Kafka topic supply_chain.deliveries."""
-
+    """Delivery event from suppliers (Kafka topic: supply_chain.deliveries)"""
     delivery_id: int
     po_id: int
     supplier_id: int
@@ -188,6 +184,8 @@ class DeliveryEvent(BaseAnalyticsModel):
 # ============================================================================
 
 class GLAccount(BaseAnalyticsModel):
+    """General ledger account definition for the chart of accounts."""
+
     gl_account_id: str
     account_name: str
     account_type: str  # Asset, Liability, Equity, Revenue, Expense
@@ -200,7 +198,8 @@ class GLAccount(BaseAnalyticsModel):
 
 
 class TransactionEvent(BaseAnalyticsModel):
-    """Financial transaction event (Kafka topic: financials.transactions)"""
+    """Financial transaction event published to Kafka topic financials.transactions."""
+
     transaction_id: int
     gl_account_id: str
     debit_amount: Decimal = Decimal("0.00")
@@ -216,7 +215,8 @@ class TransactionEvent(BaseAnalyticsModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class BudgetEvent(BaseAnalyticsModel):
-    """Budget event (Kafka topic: financials.budgets)"""
+    """Budget allocation event published to Kafka topic financials.budgets."""
+
     budget_id: int
     gl_account_id: str
     budget_amount: Decimal
@@ -228,7 +228,8 @@ class BudgetEvent(BaseAnalyticsModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class ActualEvent(BaseAnalyticsModel):
-    """Actual financial event (Kafka topic: financials.actuals)"""
+    """Realized financial amount event published to Kafka topic financials.actuals."""
+
     actual_id: int
     gl_account_id: str
     actual_amount: Decimal
