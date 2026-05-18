@@ -137,6 +137,18 @@ def metrics() -> Dict[str, Any]:
     }
 
 
+@app.get("/readyz")
+def readiness() -> Dict[str, Any]:
+    """Kubernetes readiness probe — verifies DB connection is reachable."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ready", "service": "forecasting-service"}
+    except Exception as e:
+        logger.error("Readiness check failed: %s", e)
+        raise HTTPException(status_code=503, detail="Service not ready")
+
+
 # Demand Forecasting
 
 @app.get("/forecast/demand/{product_id}")
