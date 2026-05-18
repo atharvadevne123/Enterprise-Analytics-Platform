@@ -121,7 +121,9 @@ def root() -> Dict[str, Any]:
             "/forecast/demand/{product_id}",
             "/forecast/demand/category/{category}",
             "/forecast/lead-time/{supplier_id}",
-            "/forecast/cash-flow"
+            "/forecast/cash-flow",
+            "/forecast/inventory/reorder",
+            "/forecast/demand/trend"
         ]
     }
 
@@ -440,6 +442,127 @@ def forecast_cash_flow(
     except Exception as e:
         logger.error(f"Error forecasting cash flow: {e}")
         raise HTTPException(status_code=500, detail="Error generating forecast")
+
+
+
+@app.get("/forecast/inventory/reorder")
+def forecast_reorder_dates(
+    horizon_days: int = Query(30, ge=1, le=90),
+) -> Dict[str, Any]:
+    """Forecast which products will hit their reorder point within the next N days."""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                SELECT
+                    product_id,
+                    product_name,
+                    current_stock_level,
+                    reorder_point,
+                    lead_time_days
+                FROM public.dim_products
+                WHERE is_active = true
+                  AND current_stock_level > reorder_point
+                ORDER BY (current_stock_level - reorder_point) ASC
+                LIMIT 50
+            """)
+            result = conn.execute(query)
+            products = [dict(r._mapping) for r in result]
+
+            velocity_query = text("""
+                SELECT
+                    product_id,
+                    AVG(quantity) AS avg_daily_demand
+                FROM public.fact_orders
+                WHERE order_date_id >= :cutoff_id
+                  AND order_status != 'cancelled'
+                GROUP BY product_id
+            """)
+            from datetime import date, timedelta
+            cutoff = date.today() - timedelta(days=30)
+            cutoff_id = int(cutoff.strftime("%Y%m%d"))
+            vel_result = conn.execute(velocity_query, {"cutoff_id": cutoff_id})
+            velocity = {row[0]: float(row[1]) for row in vel_result}
+
+        forecasts = []
+        for p in products:
+            pid = p["product_id"]
+            stock = p["current_stock_level"]
+            reorder = p["reorder_point"]
+            avg_demand = velocity.get(pid, 0)
+            if avg_demand > 0:
+                days_until_reorder = (stock - reorder) / avg_demand
+            else:
+                days_until_reorder = float("inf")
+
+            if days_until_reorder <= horizon_days:
+                forecasts.append({
+                    **p,
+                    "avg_daily_demand": round(avg_demand, 2),
+                    "days_until_reorder": round(days_until_reorder, 1),
+                })
+
+        return {
+            "horizon_days": horizon_days,
+            "products_at_risk": len(forecasts),
+            "forecasts": sorted(forecasts, key=lambda x: x["days_until_reorder"]),
+            "updated_at": datetime.now(),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error forecasting reorder dates: %s", e)
+        raise HTTPException(status_code=500, detail="Error generating reorder forecast")
+
+
+@app.get("/forecast/demand/trend")
+def get_demand_trend(
+    product_id: int,
+) -> Dict[str, Any]:
+    """Return linear trend slope and intercept for a product's demand history."""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                SELECT order_date_id, SUM(quantity) AS total_quantity
+                FROM public.fact_orders
+                WHERE product_id = :product_id
+                GROUP BY order_date_id
+                ORDER BY order_date_id DESC
+                LIMIT 90
+            """)
+            result = conn.execute(query, {"product_id": product_id})
+            historical = [(row[0], float(row[1])) for row in result]
+
+        if len(historical) < 7:
+            raise HTTPException(status_code=400, detail="Insufficient data for trend analysis")
+
+        quantities = np.array([q for _, q in reversed(historical)])
+        X = np.arange(len(quantities)).reshape(-1, 1)
+
+        from sklearn.linear_model import LinearRegression
+        model = LinearRegression()
+        model.fit(X, quantities)
+
+        slope = float(model.coef_[0])
+        intercept = float(model.intercept_)
+        r_squared = float(model.score(X, quantities))
+        trend_direction = "increasing" if slope > 0.05 else ("decreasing" if slope < -0.05 else "stable")
+
+        return {
+            "product_id": product_id,
+            "data_points": len(quantities),
+            "slope_per_day": round(slope, 4),
+            "intercept": round(intercept, 4),
+            "r_squared": round(r_squared, 4),
+            "trend_direction": trend_direction,
+            "updated_at": datetime.now(),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error computing demand trend: %s", e)
+        raise HTTPException(status_code=500, detail="Error computing trend")
 
 
 if __name__ == "__main__":
