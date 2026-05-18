@@ -115,33 +115,61 @@ def metrics() -> Dict[str, Any]:
 def detect_statistical_anomaly(
     values: List[float],
     current_value: float,
-    threshold_sigma: float = 2.0
-) -> tuple:
-    """
-    Detect anomaly using Z-score method
+    threshold_sigma: float = 2.0,
+) -> tuple[bool, float, float, float]:
+    """Detect anomaly using Z-score method.
 
     Args:
-        values: Historical values
-        current_value: Current metric value
-        threshold_sigma: Number of standard deviations
+        values: Historical values for baseline.
+        current_value: Current metric value to evaluate.
+        threshold_sigma: Number of standard deviations for anomaly threshold.
 
     Returns:
-        (is_anomaly, z_score, mean, stddev)
+        Tuple of (is_anomaly, z_score, mean, stddev).
     """
     if len(values) < 3:
-        return False, 0, 0, 0
+        return False, 0.0, 0.0, 0.0
 
     values_array = np.array(values)
-    mean = np.mean(values_array)
-    stddev = np.std(values_array)
+    mean = float(np.mean(values_array))
+    stddev = float(np.std(values_array))
 
     if stddev == 0:
-        return False, 0, mean, stddev
+        return False, 0.0, mean, stddev
 
     z_score = (current_value - mean) / stddev
     is_anomaly = abs(z_score) > threshold_sigma
 
     return is_anomaly, z_score, mean, stddev
+
+
+def detect_iqr_anomaly(
+    values: List[float],
+    current_value: float,
+    multiplier: float = 1.5,
+) -> tuple[bool, float, float]:
+    """Detect anomaly using Interquartile Range (IQR) method.
+
+    Args:
+        values: Historical values for baseline.
+        current_value: Current metric value to evaluate.
+        multiplier: IQR multiplier for fence calculation (1.5 = standard).
+
+    Returns:
+        Tuple of (is_anomaly, lower_fence, upper_fence).
+    """
+    if len(values) < 4:
+        return False, 0.0, float("inf")
+
+    values_array = np.array(values)
+    q1 = float(np.percentile(values_array, 25))
+    q3 = float(np.percentile(values_array, 75))
+    iqr = q3 - q1
+    lower_fence = q1 - multiplier * iqr
+    upper_fence = q3 + multiplier * iqr
+    is_anomaly = current_value < lower_fence or current_value > upper_fence
+
+    return is_anomaly, lower_fence, upper_fence
 
 
 # E-Commerce Anomalies
