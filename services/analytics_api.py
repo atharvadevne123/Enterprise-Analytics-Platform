@@ -11,7 +11,10 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Query
+import uuid
+
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator
 from sqlalchemy import create_engine, text
 
@@ -33,6 +36,17 @@ app = FastAPI(
     contact={"name": "Analytics Team", "email": "devneatharva@gmail.com"},
     license_info={"name": "MIT"},
 )
+
+
+@app.middleware("http")
+async def add_correlation_id(request: Request, call_next):
+    """Attach a unique X-Request-ID header to every response for tracing."""
+    correlation_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    logger.info("Request %s %s [id=%s]", request.method, request.url.path, correlation_id)
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = correlation_id
+    return response
+
 
 # Database connection
 DB_URL = os.getenv(
