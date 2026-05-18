@@ -584,6 +584,96 @@ def acknowledge_alert(alert_id: str) -> Dict[str, str]:
         raise HTTPException(status_code=500, detail="Error acknowledging alert")
 
 
+
+@app.get("/detect/financial/cashflow")
+def detect_cashflow_anomaly(
+    days: int = Query(30, ge=7, le=365),
+    method: str = Query("zscore", pattern="^(zscore|iqr)$"),
+) -> Dict[str, Any]:
+    """Detect anomalies in daily cash flow over the last N days."""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                SELECT
+                    order_date_id,
+                    SUM(total_amount) AS daily_cashflow
+                FROM public.fact_orders
+                WHERE order_status != 'cancelled'
+                GROUP BY order_date_id
+                ORDER BY order_date_id DESC
+                LIMIT :days
+            """)
+            result = conn.execute(query, {"days": days})
+            rows = [(row[0], float(row[1])) for row in result]
+
+        if len(rows) < 7:
+            raise HTTPException(status_code=400, detail="Insufficient data for anomaly detection")
+
+        values = [v for _, v in rows]
+        if method == "iqr":
+            result_data = detect_iqr_anomaly(values)
+        else:
+            result_data = detect_statistical_anomaly(values)
+
+        return {
+            "metric": "daily_cashflow",
+            "method": method,
+            "period_days": days,
+            "data_points": len(values),
+            **result_data,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error detecting cashflow anomaly: %s", e)
+        raise HTTPException(status_code=500, detail="Error detecting anomaly")
+
+
+@app.get("/detect/supply-chain/lead-time")
+def detect_lead_time_anomaly(
+    supplier_id: int,
+    method: str = Query("zscore", pattern="^(zscore|iqr)$"),
+) -> Dict[str, Any]:
+    """Detect anomalies in supplier lead time history."""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                SELECT lead_time_days
+                FROM public.fact_deliveries
+                WHERE supplier_id = :supplier_id
+                ORDER BY delivery_date_id DESC
+                LIMIT 50
+            """)
+            result = conn.execute(query, {"supplier_id": supplier_id})
+            lead_times = [float(row[0]) for row in result]
+
+        if not lead_times:
+            raise HTTPException(status_code=404, detail="No delivery data for supplier")
+
+        if len(lead_times) < 5:
+            raise HTTPException(status_code=400, detail="Insufficient data for anomaly detection")
+
+        if method == "iqr":
+            result_data = detect_iqr_anomaly(lead_times)
+        else:
+            result_data = detect_statistical_anomaly(lead_times)
+
+        return {
+            "supplier_id": supplier_id,
+            "metric": "lead_time_days",
+            "method": method,
+            "data_points": len(lead_times),
+            **result_data,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error detecting lead time anomaly: %s", e)
+        raise HTTPException(status_code=500, detail="Error detecting anomaly")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8002, workers=2)
