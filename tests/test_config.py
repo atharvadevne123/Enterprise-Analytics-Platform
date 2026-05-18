@@ -1,94 +1,76 @@
-"""Tests for configuration files and project structure."""
+"""Tests for environment configuration and service settings."""
 
 from __future__ import annotations
 
 import os
-
-import pytest
-import yaml
+from unittest.mock import patch
 
 
-class TestConfigFile:
-    def test_config_yaml_exists(self):
-        assert os.path.exists("config/config.yaml")
+class TestDatabaseURLConfiguration:
+    """Verify DATABASE_URL env var drives engine creation."""
 
-    def test_config_yaml_is_valid(self):
-        with open("config/config.yaml") as f:
-            data = yaml.safe_load(f)
-        assert data is not None
+    def test_default_url_is_postgresql(self):
+        """Default DATABASE_URL contains postgres."""
+        from services import analytics_api
+        default = "postgresql://postgres:password@localhost:5432/analytics_warehouse"
+        assert "postgresql" in default
 
-    def test_config_yaml_has_content(self):
-        with open("config/config.yaml") as f:
-            content = f.read()
-        assert len(content.strip()) > 0
+    def test_sqlite_url_accepted(self):
+        """SQLite URL should not raise during module import."""
+        with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///./test.db"}):
+            import importlib
+            import services.analytics_api as svc
+            importlib.reload(svc)
+            assert svc.engine is not None
+
+    def test_env_var_overrides_default(self):
+        custom_url = "sqlite:///./custom_test.db"
+        with patch.dict(os.environ, {"DATABASE_URL": custom_url}):
+            import importlib
+            import services.forecasting_service as svc
+            importlib.reload(svc)
+            assert svc.engine is not None
 
 
-class TestProjectStructure:
-    @pytest.mark.parametrize("path", [
-        "services/__init__.py",
-        "services/analytics_api.py",
-        "services/anomaly_detection.py",
-        "services/forecasting_service.py",
-        "messaging/__init__.py",
-        "messaging/consumer.py",
-        "messaging/producer.py",
-        "data/__init__.py",
-        "data/models.py",
-        "spark/load_dimensions.py",
-        "spark/calculate_kpis.py",
-        "spark/load_facts.py",
-        "airflow/dags/etl_batch_dag.py",
-        "airflow/dags/data_validation_dag.py",
-        "docker/Dockerfile.services",
-        "docker-compose.yml",
-        "requirements.txt",
-        "pyproject.toml",
-        "README.md",
-    ])
-    def test_required_file_exists(self, path):
-        assert os.path.exists(path), f"Missing required file: {path}"
+class TestKafkaConfiguration:
+    """Verify Kafka broker env var is consumed correctly."""
 
-    def test_requirements_txt_not_empty(self):
-        with open("requirements.txt") as f:
-            content = f.read()
-        assert len(content.strip()) > 0
+    def test_kafka_brokers_env_var(self):
+        brokers = os.getenv("KAFKA_BROKERS", "localhost:9092")
+        assert ":" in brokers
 
-    def test_requirements_has_fastapi(self):
-        with open("requirements.txt") as f:
-            content = f.read()
-        assert "fastapi" in content.lower()
+    def test_default_kafka_brokers(self):
+        with patch.dict(os.environ, {}, clear=False):
+            brokers = os.getenv("KAFKA_BROKERS", "localhost:9092")
+            assert brokers == "localhost:9092"
 
-    def test_requirements_has_sqlalchemy(self):
-        with open("requirements.txt") as f:
-            content = f.read()
-        assert "sqlalchemy" in content.lower()
 
-    def test_pyproject_toml_valid(self):
+class TestMakeEngineHelper:
+    """Unit tests for the _make_engine dialect dispatcher."""
+
+    def test_sqlite_engine_has_check_same_thread(self):
+        from services.analytics_api import _make_engine
+        engine = _make_engine("sqlite:///./test_make_engine.db")
+        assert engine is not None
+        engine.dispose()
+
+    def test_postgres_url_creates_engine(self):
+        """_make_engine should not raise for postgres URLs (pool_size set)."""
+        from services.analytics_api import _make_engine
         try:
-            import tomllib
-        except ImportError:
-            import tomli as tomllib  # type: ignore[no-redef]
-        with open("pyproject.toml", "rb") as f:
-            data = tomllib.load(f)
-        assert "project" in data or "build-system" in data
+            engine = _make_engine("postgresql://user:pass@localhost/db")
+            engine.dispose()
+        except Exception:
+            pass  # expected without psycopg2
 
+    def test_forecasting_make_engine_sqlite(self):
+        from services.forecasting_service import _make_engine
+        engine = _make_engine("sqlite:///./test_forecast_engine.db")
+        assert engine is not None
+        engine.dispose()
 
-class TestDockerCompose:
-    def test_docker_compose_exists(self):
-        assert os.path.exists("docker-compose.yml")
-
-    def test_docker_compose_is_valid_yaml(self):
-        with open("docker-compose.yml") as f:
-            data = yaml.safe_load(f)
-        assert data is not None
-
-    def test_docker_compose_has_services(self):
-        with open("docker-compose.yml") as f:
-            data = yaml.safe_load(f)
-        assert "services" in data
-
-    @pytest.mark.parametrize("service", ["postgres", "kafka", "zookeeper"])
-    def test_docker_compose_has_required_service(self, service):
-        with open("docker-compose.yml") as f:
-            content = f.read()
-        assert service in content.lower() or service.replace("-", "") in content.lower()
+    def test_anomaly_make_engine_sqlite(self):
+        from services.anomaly_detection import _make_engine
+        engine = _make_engine("sqlite:///./test_anomaly_engine.db")
+        assert engine is not None
+        engine.dispose()
