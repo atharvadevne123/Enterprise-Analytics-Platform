@@ -71,6 +71,7 @@ class AnomalyAlert(BaseModel):
 # Root
 @app.get("/")
 def root() -> Dict[str, Any]:
+    """Return service metadata and available endpoint list."""
     return {
         "service": "anomaly-detection",
         "version": "1.0.0",
