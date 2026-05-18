@@ -112,6 +112,18 @@ def metrics() -> Dict[str, Any]:
     }
 
 
+@app.get("/readyz")
+def readiness() -> Dict[str, Any]:
+    """Kubernetes readiness probe — verifies DB connection is reachable."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ready", "service": "anomaly-detection"}
+    except Exception as e:
+        logger.error("Readiness check failed: %s", e)
+        raise HTTPException(status_code=503, detail="Service not ready")
+
+
 def detect_statistical_anomaly(
     values: List[float],
     current_value: float,
