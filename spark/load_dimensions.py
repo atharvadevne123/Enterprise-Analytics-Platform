@@ -16,12 +16,13 @@ from pyspark.sql.functions import coalesce, col, current_timestamp, lit
 logger = logging.getLogger(__name__)
 
 # Initialize Spark session
-spark = SparkSession.builder \
-    .appName("load-dimensions") \
-    .config("spark.executor.memory", os.getenv("SPARK_EXECUTOR_MEMORY", "4g")) \
-    .config("spark.executor.cores", os.getenv("SPARK_EXECUTOR_CORES", "2")) \
-    .config("spark.shuffle.partitions", "200") \
+spark = (
+    SparkSession.builder.appName("load-dimensions")
+    .config("spark.executor.memory", os.getenv("SPARK_EXECUTOR_MEMORY", "4g"))
+    .config("spark.executor.cores", os.getenv("SPARK_EXECUTOR_CORES", "2"))
+    .config("spark.shuffle.partitions", "200")
     .getOrCreate()
+)
 
 spark.sparkContext.setLogLevel("INFO")
 
@@ -48,15 +49,11 @@ def load_products_dimension(spark: SparkSession) -> None:
     """
     logger.info("Loading products dimension...")
 
-    df = spark.read \
-        .jdbc(db_url, "staging.stg_products", db_properties)
+    df = spark.read.jdbc(db_url, "staging.stg_products", db_properties)
 
-    df = df.withColumn("dw_created_at", current_timestamp()) \
-        .withColumn("dw_updated_at", current_timestamp())
+    df = df.withColumn("dw_created_at", current_timestamp()).withColumn("dw_updated_at", current_timestamp())
 
-    df.write \
-        .mode("overwrite") \
-        .jdbc(db_url, "public.dim_products", db_properties)
+    df.write.mode("overwrite").jdbc(db_url, "public.dim_products", db_properties)
 
     logger.info("Loaded %d products", df.count())
 
@@ -69,24 +66,24 @@ def load_customers_dimension(spark: SparkSession) -> None:
     """
     logger.info("Loading customers dimension...")
 
-    df = spark.read \
-        .jdbc(db_url, "staging.stg_customers", db_properties)
+    df = spark.read.jdbc(db_url, "staging.stg_customers", db_properties)
 
-    orders_df = spark.read \
-        .jdbc(db_url, "staging.stg_orders", db_properties)
+    orders_df = spark.read.jdbc(db_url, "staging.stg_orders", db_properties)
 
-    ltv_df = orders_df.groupBy("customer_id") \
-        .agg({"total_amount": "sum"}) \
+    ltv_df = (
+        orders_df.groupBy("customer_id")
+        .agg({"total_amount": "sum"})
         .withColumnRenamed("sum(total_amount)", "lifetime_value")
+    )
 
-    df = df.join(ltv_df, on="customer_id", how="left") \
-        .withColumn("lifetime_value", coalesce(col("lifetime_value"), lit(0))) \
-        .withColumn("dw_created_at", current_timestamp()) \
+    df = (
+        df.join(ltv_df, on="customer_id", how="left")
+        .withColumn("lifetime_value", coalesce(col("lifetime_value"), lit(0)))
+        .withColumn("dw_created_at", current_timestamp())
         .withColumn("dw_updated_at", current_timestamp())
+    )
 
-    df.write \
-        .mode("overwrite") \
-        .jdbc(db_url, "public.dim_customers", db_properties)
+    df.write.mode("overwrite").jdbc(db_url, "public.dim_customers", db_properties)
 
     logger.info("Loaded %d customers", df.count())
 
@@ -99,27 +96,29 @@ def load_suppliers_dimension(spark: SparkSession) -> None:
     """
     logger.info("Loading suppliers dimension...")
 
-    df = spark.read \
-        .jdbc(db_url, "staging.stg_suppliers", db_properties)
+    df = spark.read.jdbc(db_url, "staging.stg_suppliers", db_properties)
 
-    deliveries_df = spark.read \
-        .jdbc(db_url, "staging.stg_deliveries", db_properties)
+    deliveries_df = spark.read.jdbc(db_url, "staging.stg_deliveries", db_properties)
 
-    metrics_df = deliveries_df.groupBy("supplier_id") \
-        .agg({
-            "is_on_time": "avg",
-            "is_quality_pass": "avg",
-        }) \
-        .withColumnRenamed("avg(is_on_time)", "on_time_delivery_pct") \
+    metrics_df = (
+        deliveries_df.groupBy("supplier_id")
+        .agg(
+            {
+                "is_on_time": "avg",
+                "is_quality_pass": "avg",
+            }
+        )
+        .withColumnRenamed("avg(is_on_time)", "on_time_delivery_pct")
         .withColumnRenamed("avg(is_quality_pass)", "quality_score")
+    )
 
-    df = df.join(metrics_df, on="supplier_id", how="left") \
-        .withColumn("dw_created_at", current_timestamp()) \
+    df = (
+        df.join(metrics_df, on="supplier_id", how="left")
+        .withColumn("dw_created_at", current_timestamp())
         .withColumn("dw_updated_at", current_timestamp())
+    )
 
-    df.write \
-        .mode("overwrite") \
-        .jdbc(db_url, "public.dim_suppliers", db_properties)
+    df.write.mode("overwrite").jdbc(db_url, "public.dim_suppliers", db_properties)
 
     logger.info("Loaded %d suppliers", df.count())
 
@@ -132,14 +131,11 @@ def load_gl_accounts_dimension(spark: SparkSession) -> None:
     """
     logger.info("Loading GL accounts dimension...")
 
-    df = spark.read \
-        .jdbc(db_url, "staging.stg_gl_accounts", db_properties)
+    df = spark.read.jdbc(db_url, "staging.stg_gl_accounts", db_properties)
 
     df = df.withColumn("dw_created_at", current_timestamp())
 
-    df.write \
-        .mode("overwrite") \
-        .jdbc(db_url, "public.dim_gl_accounts", db_properties)
+    df.write.mode("overwrite").jdbc(db_url, "public.dim_gl_accounts", db_properties)
 
     logger.info("Loaded %d GL accounts", df.count())
 
@@ -161,27 +157,27 @@ def load_date_dimension(spark: SparkSession) -> None:
     current = start_date
 
     while current <= end_date:
-        dates.append({
-            "date_id": int(current.strftime("%Y%m%d")),
-            "date": current.date(),
-            "year": current.year,
-            "quarter": (current.month - 1) // 3 + 1,
-            "month": current.month,
-            "week": current.isocalendar()[1],
-            "day_of_month": current.day,
-            "day_of_week": current.weekday() + 1,
-            "day_name": current.strftime("%A"),
-            "month_name": current.strftime("%B"),
-            "is_weekend": 1 if current.weekday() >= 5 else 0,
-            "is_holiday": 0,
-        })
+        dates.append(
+            {
+                "date_id": int(current.strftime("%Y%m%d")),
+                "date": current.date(),
+                "year": current.year,
+                "quarter": (current.month - 1) // 3 + 1,
+                "month": current.month,
+                "week": current.isocalendar()[1],
+                "day_of_month": current.day,
+                "day_of_week": current.weekday() + 1,
+                "day_name": current.strftime("%A"),
+                "month_name": current.strftime("%B"),
+                "is_weekend": 1 if current.weekday() >= 5 else 0,
+                "is_holiday": 0,
+            }
+        )
         current += timedelta(days=1)
 
     df = spark.createDataFrame(dates)
 
-    df.write \
-        .mode("overwrite") \
-        .jdbc(db_url, "public.dim_dates", db_properties)
+    df.write.mode("overwrite").jdbc(db_url, "public.dim_dates", db_properties)
 
     logger.info("Loaded %d dates", df.count())
 

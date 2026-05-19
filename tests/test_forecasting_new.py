@@ -17,6 +17,7 @@ def _make_client(mock_rows=None, fetchone_val=None):
         mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.forecasting_service import app
+
         return TestClient(app), mock_conn
 
 
@@ -42,6 +43,7 @@ class TestReorderForecastEndpoint:
         with patch("services.forecasting_service.engine") as mock_engine:
             mock_engine.connect.side_effect = Exception("DB error")
             from services.forecasting_service import app
+
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/forecast/inventory/reorder")
             assert resp.status_code in (400, 500)
@@ -77,6 +79,7 @@ class TestDemandTrendEndpoint:
         with patch("services.forecasting_service.engine") as mock_engine:
             mock_engine.connect.side_effect = Exception("DB error")
             from services.forecasting_service import app
+
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/forecast/demand/trend?product_id=1")
             assert resp.status_code in (400, 500)

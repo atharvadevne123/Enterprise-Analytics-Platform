@@ -17,15 +17,19 @@ def _make_client(mock_rows=None, fetchone_val=None):
         mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.anomaly_detection import app
+
         return TestClient(app), mock_conn
 
 
 class TestCashflowAnomalyEndpoint:
-    @pytest.mark.parametrize("days,method", [
-        (30, "zscore"),
-        (90, "iqr"),
-        (60, "zscore"),
-    ])
+    @pytest.mark.parametrize(
+        "days,method",
+        [
+            (30, "zscore"),
+            (90, "iqr"),
+            (60, "zscore"),
+        ],
+    )
     def test_cashflow_anomaly_params(self, days, method):
         rows = [MagicMock() for _ in range(30)]
         for i, r in enumerate(rows):
@@ -52,20 +56,24 @@ class TestCashflowAnomalyEndpoint:
         with patch("services.anomaly_detection.engine") as mock_engine:
             mock_engine.connect.side_effect = Exception("DB error")
             from services.anomaly_detection import app
+
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/detect/financial/cashflow")
             assert resp.status_code in (400, 500)
 
 
 class TestLeadTimeAnomalyEndpoint:
-    @pytest.mark.parametrize("supplier_id,method", [
-        (1, "zscore"),
-        (2, "iqr"),
-        (100, "zscore"),
-    ])
+    @pytest.mark.parametrize(
+        "supplier_id,method",
+        [
+            (1, "zscore"),
+            (2, "iqr"),
+            (100, "zscore"),
+        ],
+    )
     def test_lead_time_anomaly_params(self, supplier_id, method):
         rows = [MagicMock() for _ in range(20)]
-        for i, r in enumerate(rows):
+        for _i, r in enumerate(rows):
             r.__getitem__ = lambda s, k: [7 + k][0]
         client, mock_conn = _make_client(mock_rows=rows)
         resp = client.get(f"/detect/supply-chain/lead-time?supplier_id={supplier_id}&method={method}")

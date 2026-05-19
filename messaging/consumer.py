@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Callable, List, Optional
+from collections.abc import Callable
 
 from kafka import KafkaConsumer
 
@@ -20,7 +20,7 @@ class UnifiedConsumer:
     def __init__(
         self,
         topic: str,
-        broker_urls: Optional[List[str]] = None,
+        broker_urls: list[str] | None = None,
         group_id: str = "unified-analytics",
         auto_offset_reset: str = "earliest",
     ) -> None:
@@ -45,19 +45,16 @@ class UnifiedConsumer:
             group_id=group_id,
             auto_offset_reset=auto_offset_reset,
             enable_auto_commit=False,
-            value_deserializer=lambda m: json.loads(m.decode('utf-8')),
+            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
             session_timeout_ms=30000,
             heartbeat_interval_ms=10000,
             max_poll_records=500,
-            max_poll_interval_ms=300000
+            max_poll_interval_ms=300000,
         )
 
         logger.info(f"Kafka consumer initialized for topic: {topic}")
 
-    def consume_messages(self,
-                        message_handler: Callable,
-                        timeout_ms: int = 1000,
-                        max_messages: Optional[int] = None):
+    def consume_messages(self, message_handler: Callable, timeout_ms: int = 1000, max_messages: int | None = None):
         """
         Consume messages from Kafka
 
@@ -76,7 +73,7 @@ class UnifiedConsumer:
                     logger.debug(f"No messages received from {self.topic}")
                     continue
 
-                for topic_partition, records in messages.items():
+                for _topic_partition, records in messages.items():
                     for record in records:
                         try:
                             # Process the message
@@ -106,10 +103,7 @@ class UnifiedConsumer:
 
         return message_count
 
-    def consume_batch(self,
-                     message_handler: Callable,
-                     batch_size: int = 100,
-                     timeout_ms: int = 5000) -> int:
+    def consume_batch(self, message_handler: Callable, batch_size: int = 100, timeout_ms: int = 5000) -> int:
         """
         Consume messages in batches
 
@@ -136,7 +130,7 @@ class UnifiedConsumer:
                         batch = []
                     continue
 
-                for topic_partition, records in messages.items():
+                for _topic_partition, records in messages.items():
                     for record in records:
                         batch.append(record.value)
 
@@ -176,8 +170,8 @@ class MultiTopicConsumer:
 
     def __init__(
         self,
-        topics: List[str],
-        broker_urls: Optional[List[str]] = None,
+        topics: list[str],
+        broker_urls: list[str] | None = None,
         group_id: str = "unified-analytics",
         auto_offset_reset: str = "earliest",
     ) -> None:
@@ -203,10 +197,10 @@ class MultiTopicConsumer:
             group_id=group_id,
             auto_offset_reset=auto_offset_reset,
             enable_auto_commit=False,
-            value_deserializer=lambda m: json.loads(m.decode('utf-8')),
+            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
             session_timeout_ms=30000,
             heartbeat_interval_ms=10000,
-            max_poll_records=500
+            max_poll_records=500,
         )
 
         logger.info(f"Multi-topic consumer initialized for topics: {topics}")
@@ -235,14 +229,10 @@ class MultiTopicConsumer:
                     logger.debug("No messages received")
                     continue
 
-                for topic_partition, records in messages.items():
+                for _topic_partition, records in messages.items():
                     for record in records:
                         try:
-                            message_handler(
-                                record.value,
-                                record.topic,
-                                record.partition
-                            )
+                            message_handler(record.value, record.topic, record.partition)
                             message_count += 1
                         except Exception as e:
                             logger.error(f"Error processing message: {e}")
@@ -274,7 +264,7 @@ if __name__ == "__main__":
         logger.info("[%s:%s] %s", topic, partition, message)
 
     # Example: consume from single topic
-    consumer = UnifiedConsumer('ecommerce.orders')
+    consumer = UnifiedConsumer("ecommerce.orders")
     try:
         consumer.consume_messages(process_message, max_messages=10)
     finally:

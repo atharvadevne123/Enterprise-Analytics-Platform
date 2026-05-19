@@ -8,30 +8,20 @@ from decimal import Decimal
 import pytest
 
 from data.models import (
-    ActualEvent,
     AnomalyAlert,
-    BudgetEvent,
-    CashFlowForecast,
     Customer,
     CustomerSegment,
     DeliveryEvent,
     DeliveryStatus,
-    DemandForecast,
-    FinancialMetrics,
-    GLAccount,
     InventoryEvent,
-    LeadTimeForecast,
     OrderEvent,
     OrderStatus,
     PaymentStatus,
     Product,
-    PurchaseOrderEvent,
     Supplier,
     TransactionEvent,
     TransactionType,
-    UnifiedKPIMetrics,
 )
-
 
 NOW = datetime(2024, 6, 15, 12, 0, 0)
 

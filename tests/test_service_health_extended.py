@@ -27,21 +27,27 @@ def _get_client(service: str):
 class TestMetricsEndpoint:
     """All services must expose /metrics with db_pool_size key."""
 
-    @pytest.mark.parametrize("service", [
-        "analytics_api",
-        "anomaly_detection",
-        "forecasting_service",
-    ])
+    @pytest.mark.parametrize(
+        "service",
+        [
+            "analytics_api",
+            "anomaly_detection",
+            "forecasting_service",
+        ],
+    )
     def test_metrics_returns_200(self, service):
         client = _get_client(service)
         resp = client.get("/metrics")
         assert resp.status_code == 200
 
-    @pytest.mark.parametrize("service", [
-        "analytics_api",
-        "anomaly_detection",
-        "forecasting_service",
-    ])
+    @pytest.mark.parametrize(
+        "service",
+        [
+            "analytics_api",
+            "anomaly_detection",
+            "forecasting_service",
+        ],
+    )
     def test_metrics_has_status_key(self, service):
         client = _get_client(service)
         data = client.get("/metrics").json()
@@ -51,11 +57,14 @@ class TestMetricsEndpoint:
 class TestRootEndpointEnhanced:
     """Root endpoint must include endpoints list."""
 
-    @pytest.mark.parametrize("service", [
-        "analytics_api",
-        "anomaly_detection",
-        "forecasting_service",
-    ])
+    @pytest.mark.parametrize(
+        "service",
+        [
+            "analytics_api",
+            "anomaly_detection",
+            "forecasting_service",
+        ],
+    )
     def test_root_has_endpoints_list(self, service):
         client = _get_client(service)
         data = client.get("/").json()
@@ -63,11 +72,14 @@ class TestRootEndpointEnhanced:
         assert isinstance(data["endpoints"], list)
         assert len(data["endpoints"]) > 0
 
-    @pytest.mark.parametrize("service", [
-        "analytics_api",
-        "anomaly_detection",
-        "forecasting_service",
-    ])
+    @pytest.mark.parametrize(
+        "service",
+        [
+            "analytics_api",
+            "anomaly_detection",
+            "forecasting_service",
+        ],
+    )
     def test_root_has_version_key(self, service):
         client = _get_client(service)
         data = client.get("/").json()
@@ -77,21 +89,27 @@ class TestRootEndpointEnhanced:
 class TestConfigSettingsEndpoint:
     """All services must expose /config/settings."""
 
-    @pytest.mark.parametrize("service", [
-        "analytics_api",
-        "anomaly_detection",
-        "forecasting_service",
-    ])
+    @pytest.mark.parametrize(
+        "service",
+        [
+            "analytics_api",
+            "anomaly_detection",
+            "forecasting_service",
+        ],
+    )
     def test_config_settings_returns_200(self, service):
         client = _get_client(service)
         resp = client.get("/config/settings")
         assert resp.status_code == 200
 
-    @pytest.mark.parametrize("service", [
-        "analytics_api",
-        "anomaly_detection",
-        "forecasting_service",
-    ])
+    @pytest.mark.parametrize(
+        "service",
+        [
+            "analytics_api",
+            "anomaly_detection",
+            "forecasting_service",
+        ],
+    )
     def test_config_settings_has_service_key(self, service):
         client = _get_client(service)
         data = client.get("/config/settings").json()

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Generator
 from datetime import date
-from typing import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -22,6 +22,7 @@ os.environ.setdefault("KAFKA_BROKERS", "localhost:9092")
 # Analytics API fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def analytics_client() -> Generator:
     """TestClient for the analytics API with a mocked DB engine."""
@@ -30,6 +31,7 @@ def analytics_client() -> Generator:
         mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.analytics_api import app
+
         with TestClient(app) as client:
             yield client, mock_conn
 
@@ -42,6 +44,7 @@ def anomaly_client() -> Generator:
         mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.anomaly_detection import app
+
         with TestClient(app) as client:
             yield client, mock_conn
 
@@ -54,6 +57,7 @@ def forecasting_client() -> Generator:
         mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.forecasting_service import app
+
         with TestClient(app) as client:
             yield client, mock_conn
 
@@ -61,6 +65,7 @@ def forecasting_client() -> Generator:
 # ---------------------------------------------------------------------------
 # Sample data fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def sample_ecommerce_row() -> dict:

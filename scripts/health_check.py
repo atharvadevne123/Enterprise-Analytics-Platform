@@ -13,16 +13,15 @@ from __future__ import annotations
 import argparse
 import sys
 import urllib.request
-from typing import Dict, List, Tuple
 
-SERVICES: Dict[str, int] = {
+SERVICES: dict[str, int] = {
     "analytics-api": 8000,
     "forecasting-service": 8001,
     "anomaly-detection": 8002,
 }
 
 
-def check_service(name: str, port: int, host: str = "localhost") -> Tuple[bool, str]:
+def check_service(name: str, port: int, host: str = "localhost") -> tuple[bool, str]:
     """Check health of a single service.
 
     Args:
@@ -45,7 +44,7 @@ def check_service(name: str, port: int, host: str = "localhost") -> Tuple[bool, 
         return False, f"Error: {exc}"
 
 
-def run_health_checks(host: str = "localhost") -> List[Tuple[str, bool, str]]:
+def run_health_checks(host: str = "localhost") -> list[tuple[str, bool, str]]:
     """Run health checks for all services and return results."""
     results = []
     for name, port in SERVICES.items():

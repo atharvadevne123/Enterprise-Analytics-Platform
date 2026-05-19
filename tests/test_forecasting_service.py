@@ -13,12 +13,11 @@ def _make_client(mock_rows: list | None = None):
         mock_conn = MagicMock()
         if mock_rows is not None:
             mock_conn.execute.return_value.fetchall.return_value = mock_rows
-            mock_conn.execute.return_value.fetchone.return_value = (
-                mock_rows[0] if mock_rows else None
-            )
+            mock_conn.execute.return_value.fetchone.return_value = mock_rows[0] if mock_rows else None
         mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.forecasting_service import app
+
         client = TestClient(app)
         return client, mock_conn
 
@@ -121,6 +120,7 @@ class TestEdgeCases:
         with patch("services.forecasting_service.engine") as mock_engine:
             mock_engine.connect.side_effect = Exception("DB down")
             from services.forecasting_service import app
+
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/forecast/demand")
             assert resp.status_code in (500, 200, 404)
@@ -193,6 +193,7 @@ class TestActualForecastEndpoints:
             mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
             mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
             from services.forecasting_service import app
+
             client = TestClient(app)
             resp = client.get("/metrics")
             if resp.status_code == 200:

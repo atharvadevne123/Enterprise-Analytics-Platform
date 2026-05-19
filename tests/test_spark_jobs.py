@@ -14,18 +14,22 @@ class TestLoadDimensions:
         with patch("pyspark.sql.SparkSession"):
             # If not already importable due to PySpark absence, just verify module exists
             import os
+
             assert os.path.exists("spark/load_dimensions.py")
 
     def test_load_dimensions_file_exists(self):
         import os
+
         assert os.path.exists("spark/load_dimensions.py")
 
     def test_calculate_kpis_file_exists(self):
         import os
+
         assert os.path.exists("spark/calculate_kpis.py")
 
     def test_load_facts_file_exists(self):
         import os
+
         assert os.path.exists("spark/load_facts.py")
 
 
@@ -57,21 +61,27 @@ class TestSparkJobStructure:
             content = f.read()
         assert "pyspark" in content or "SparkSession" in content
 
-    @pytest.mark.parametrize("job_file", [
-        "spark/load_dimensions.py",
-        "spark/calculate_kpis.py",
-        "spark/load_facts.py",
-    ])
+    @pytest.mark.parametrize(
+        "job_file",
+        [
+            "spark/load_dimensions.py",
+            "spark/calculate_kpis.py",
+            "spark/load_facts.py",
+        ],
+    )
     def test_spark_jobs_have_logging(self, job_file):
         with open(job_file) as f:
             content = f.read()
         assert "logging" in content or "logger" in content or "log" in content.lower()
 
-    @pytest.mark.parametrize("job_file", [
-        "spark/load_dimensions.py",
-        "spark/calculate_kpis.py",
-        "spark/load_facts.py",
-    ])
+    @pytest.mark.parametrize(
+        "job_file",
+        [
+            "spark/load_dimensions.py",
+            "spark/calculate_kpis.py",
+            "spark/load_facts.py",
+        ],
+    )
     def test_spark_jobs_not_empty(self, job_file):
         with open(job_file) as f:
             content = f.read()
@@ -79,18 +89,25 @@ class TestSparkJobStructure:
 
 
 class TestAirflowDags:
-    @pytest.mark.parametrize("dag_file", [
-        "airflow/dags/etl_batch_dag.py",
-        "airflow/dags/data_validation_dag.py",
-    ])
+    @pytest.mark.parametrize(
+        "dag_file",
+        [
+            "airflow/dags/etl_batch_dag.py",
+            "airflow/dags/data_validation_dag.py",
+        ],
+    )
     def test_dag_file_exists(self, dag_file):
         import os
+
         assert os.path.exists(dag_file)
 
-    @pytest.mark.parametrize("dag_file", [
-        "airflow/dags/etl_batch_dag.py",
-        "airflow/dags/data_validation_dag.py",
-    ])
+    @pytest.mark.parametrize(
+        "dag_file",
+        [
+            "airflow/dags/etl_batch_dag.py",
+            "airflow/dags/data_validation_dag.py",
+        ],
+    )
     def test_dag_file_has_content(self, dag_file):
         with open(dag_file) as f:
             content = f.read()

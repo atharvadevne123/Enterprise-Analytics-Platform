@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from decimal import Decimal
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from data.models import OrderEvent, OrderStatus, PaymentStatus
-from datetime import datetime
-
+from data.models import OrderEvent
 
 NOW = datetime(2024, 6, 15, 12, 0, 0)
 
@@ -35,6 +34,7 @@ class TestSendBatchMethod:
         mock_kafka.return_value = mock_producer
 
         from messaging.producer import UnifiedProducer
+
         p = UnifiedProducer()
 
         events = [_make_order(i) for i in range(5)]
@@ -47,6 +47,7 @@ class TestSendBatchMethod:
         mock_kafka.return_value = mock_producer
 
         from messaging.producer import UnifiedProducer
+
         p = UnifiedProducer()
 
         events = [_make_order(i) for i in range(3)]
@@ -59,6 +60,7 @@ class TestSendBatchMethod:
         mock_kafka.return_value = mock_producer
 
         from messaging.producer import UnifiedProducer
+
         p = UnifiedProducer()
         count = p.send_batch("ecommerce.orders", [])
         assert count == 0
@@ -70,6 +72,7 @@ class TestSendBatchMethod:
         mock_kafka.return_value = mock_producer
 
         from messaging.producer import UnifiedProducer
+
         p = UnifiedProducer()
         events = [_make_order(i) for i in range(3)]
         count = p.send_batch("ecommerce.orders", events)
@@ -81,6 +84,7 @@ class TestSendBatchMethod:
         mock_kafka.return_value = mock_producer
 
         from messaging.producer import UnifiedProducer
+
         p = UnifiedProducer()
         events = [{"order_id": i, "amount": 100.0} for i in range(4)]
         count = p.send_batch("test.topic", events)
@@ -93,6 +97,7 @@ class TestSendBatchMethod:
         mock_kafka.return_value = mock_producer
 
         from messaging.producer import UnifiedProducer
+
         p = UnifiedProducer()
         events = [_make_order(i) for i in range(batch_size)]
         count = p.send_batch("ecommerce.orders", events)

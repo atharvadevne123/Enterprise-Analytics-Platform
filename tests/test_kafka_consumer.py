@@ -14,6 +14,7 @@ class TestUnifiedConsumer:
             self.mock_instance = MagicMock()
             mock_cls.return_value = self.mock_instance
             from messaging.consumer import UnifiedConsumer
+
             self.consumer = UnifiedConsumer(
                 topic="orders",
                 broker_urls=["localhost:9092"],
@@ -39,6 +40,7 @@ class TestUnifiedConsumer:
         with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
             from messaging.consumer import UnifiedConsumer
+
             consumer = UnifiedConsumer(topic=topic, broker_urls=["localhost:9092"])
             assert consumer.topic == topic
 
@@ -57,7 +59,7 @@ class TestUnifiedConsumer:
         mock_msg = MagicMock()
         mock_msg.value = {"event": "test"}
         self.mock_instance.__iter__ = MagicMock(return_value=iter([mock_msg]))
-        for msg in self.mock_instance:
+        for _msg in self.mock_instance:
             self.consumer.consumer.commit()
             break
         self.mock_instance.commit.assert_called_once()
@@ -68,6 +70,7 @@ class TestConsumerErrorHandling:
         with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.side_effect = Exception("Kafka connection refused")
             from messaging.consumer import UnifiedConsumer
+
             try:
                 UnifiedConsumer(topic="test", broker_urls=["bad:9092"])
             except Exception:
@@ -78,6 +81,7 @@ class TestConsumerErrorHandling:
         with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
             from messaging.consumer import UnifiedConsumer
+
             c = UnifiedConsumer(topic="orders", group_id=group_id)
             assert c.group_id == group_id
 
@@ -89,6 +93,7 @@ class TestConsumerDefaultParameters:
         with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
             from messaging.consumer import UnifiedConsumer
+
             c = UnifiedConsumer(topic="test-topic")
             assert c.broker_urls == ["localhost:9092"]
 
@@ -96,6 +101,7 @@ class TestConsumerDefaultParameters:
         with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
             from messaging.consumer import UnifiedConsumer
+
             c = UnifiedConsumer(topic="test-topic")
             assert c.group_id == "unified-analytics"
 
@@ -103,21 +109,26 @@ class TestConsumerDefaultParameters:
     def test_offset_reset_options(self, offset_reset):
         with patch("messaging.consumer.KafkaConsumer"):
             from messaging.consumer import UnifiedConsumer
+
             c = UnifiedConsumer(topic="test", auto_offset_reset=offset_reset)
             assert c is not None
 
-    @pytest.mark.parametrize("topic", [
-        "ecommerce.orders",
-        "ecommerce.inventory",
-        "supply_chain.deliveries",
-        "supply_chain.purchase_orders",
-        "financials.transactions",
-        "financials.budgets",
-    ])
+    @pytest.mark.parametrize(
+        "topic",
+        [
+            "ecommerce.orders",
+            "ecommerce.inventory",
+            "supply_chain.deliveries",
+            "supply_chain.purchase_orders",
+            "financials.transactions",
+            "financials.budgets",
+        ],
+    )
     def test_all_domain_topics(self, topic):
         with patch("messaging.consumer.KafkaConsumer") as mock_cls:
             mock_cls.return_value = MagicMock()
             from messaging.consumer import UnifiedConsumer
+
             c = UnifiedConsumer(topic=topic, broker_urls=["localhost:9092"])
             assert c.topic == topic
 
@@ -131,6 +142,7 @@ class TestConsumerMessageProcessing:
             self.mock_kafka = MagicMock()
             mock_cls.return_value = self.mock_kafka
             from messaging.consumer import UnifiedConsumer
+
             self.consumer = UnifiedConsumer(topic="test", broker_urls=["localhost:9092"])
             yield
 
@@ -142,6 +154,7 @@ class TestConsumerMessageProcessing:
         self.mock_kafka.__iter__ = MagicMock(return_value=iter([mock_msg] * 3))
 
         processed = []
+
         def handler(msg, topic, partition):
             processed.append(msg)
 
@@ -157,6 +170,7 @@ class TestConsumerMessageProcessing:
         self.mock_kafka.__iter__ = MagicMock(return_value=iter(msgs))
 
         processed = []
+
         def handler(msg, *args):
             processed.append(msg)
 

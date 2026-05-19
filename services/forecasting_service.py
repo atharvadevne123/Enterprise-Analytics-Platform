@@ -7,13 +7,12 @@ from __future__ import annotations
 
 import logging
 import os
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
-import uuid
-
 from fastapi import FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel
 from sklearn.linear_model import LinearRegression
@@ -50,10 +49,7 @@ async def add_correlation_id(request: Request, call_next):
 
 
 # Database connection
-DB_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:password@localhost:5432/analytics_warehouse"
-)
+DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/analytics_warehouse")
 
 
 def _make_engine(url: str):
@@ -110,7 +106,7 @@ class CashFlowForecast(BaseModel):
 
 # Root
 @app.get("/")
-def root() -> Dict[str, Any]:
+def root() -> dict[str, Any]:
     """Return service metadata and available endpoint list."""
     return {
         "service": "forecasting-service",
@@ -121,26 +117,26 @@ def root() -> Dict[str, Any]:
             "/forecast/demand/{product_id}",
             "/forecast/demand/category/{category}",
             "/forecast/lead-time/{supplier_id}",
-            "/forecast/cash-flow"
-        ]
+            "/forecast/cash-flow",
+        ],
     }
 
 
 # Health check
 @app.get("/health")
-def health_check() -> Dict[str, str]:
+def health_check() -> dict[str, str]:
     """Return service health status."""
     return {"status": "healthy", "service": "forecasting"}
 
 
 @app.get("/version")
-def version() -> Dict[str, str]:
+def version() -> dict[str, str]:
     """Return service version information."""
     return {"service": "forecasting-service", "version": "1.0.0", "python": "3.10+"}
 
 
 @app.get("/metrics")
-def metrics() -> Dict[str, Any]:
+def metrics() -> dict[str, Any]:
     """Return basic service metrics."""
     return {
         "service": "forecasting-service",
@@ -151,7 +147,7 @@ def metrics() -> Dict[str, Any]:
 
 
 @app.get("/readyz")
-def readiness() -> Dict[str, Any]:
+def readiness() -> dict[str, Any]:
     """Kubernetes readiness probe — verifies DB connection is reachable."""
     try:
         with engine.connect() as conn:
@@ -164,11 +160,12 @@ def readiness() -> Dict[str, Any]:
 
 # Demand Forecasting
 
+
 @app.get("/forecast/demand/{product_id}")
 def forecast_demand(
     product_id: int,
     horizon_days: int = Query(30, ge=1, le=365),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Forecast product demand for next N days using linear regression."""
     try:
         with engine.connect() as conn:
@@ -188,10 +185,7 @@ def forecast_demand(
             historical = [(row[0], float(row[1])) for row in result]
 
             if len(historical) < 14:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Insufficient historical data for forecasting"
-                )
+                raise HTTPException(status_code=400, detail="Insufficient historical data for forecasting")
 
             # Prepare data
             quantities = np.array([q for _, q in reversed(historical)])
@@ -226,12 +220,12 @@ def forecast_demand(
                         "day": i + 1,
                         "forecasted_quantity": float(forecast_values[i]),
                         "lower_bound": float(lower_bound[i]),
-                        "upper_bound": float(upper_bound[i])
+                        "upper_bound": float(upper_bound[i]),
                     }
                     for i in range(min(horizon_days, len(forecast_values)))
                 ],
                 "model_version": "v1.0_linear_regression",
-                "updated_at": datetime.now()
+                "updated_at": datetime.now(),
             }
 
     except HTTPException:
@@ -245,7 +239,7 @@ def forecast_demand(
 def forecast_category_demand(
     category: str,
     horizon_days: int = Query(30, ge=1, le=365),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Forecast demand for an entire product category using ARIMA with linear fallback."""
     try:
         with engine.connect() as conn:
@@ -266,10 +260,7 @@ def forecast_category_demand(
             historical = [(row[0], float(row[1])) for row in result]
 
             if len(historical) < 14:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Insufficient historical data for category forecasting"
-                )
+                raise HTTPException(status_code=400, detail="Insufficient historical data for category forecasting")
 
             # Forecast using ARIMA
             quantities = np.array([q for _, q in reversed(historical)])
@@ -287,14 +278,11 @@ def forecast_category_demand(
                 "category": category,
                 "forecast_horizon_days": horizon_days,
                 "forecasts": [
-                    {
-                        "day": i + 1,
-                        "forecasted_quantity": float(forecast_values[i])
-                    }
+                    {"day": i + 1, "forecasted_quantity": float(forecast_values[i])}
                     for i in range(len(forecast_values))
                 ],
                 "model_version": "v1.0_arima",
-                "updated_at": datetime.now()
+                "updated_at": datetime.now(),
             }
 
     except HTTPException:
@@ -306,8 +294,9 @@ def forecast_category_demand(
 
 # Lead Time Forecasting
 
+
 @app.get("/forecast/lead-time/{supplier_id}")
-def forecast_supplier_lead_time(supplier_id: int) -> Dict[str, Any]:
+def forecast_supplier_lead_time(supplier_id: int) -> dict[str, Any]:
     """Forecast supplier lead time"""
     try:
         with engine.connect() as conn:
@@ -325,10 +314,7 @@ def forecast_supplier_lead_time(supplier_id: int) -> Dict[str, Any]:
             lead_times = [int(row[0]) for row in result]
 
             if not lead_times:
-                raise HTTPException(
-                    status_code=404,
-                    detail="No delivery data for supplier"
-                )
+                raise HTTPException(status_code=404, detail="No delivery data for supplier")
 
             # Calculate statistics
             avg_lead_time = np.mean(lead_times)
@@ -343,7 +329,7 @@ def forecast_supplier_lead_time(supplier_id: int) -> Dict[str, Any]:
                 "confidence_level": float(confidence),
                 "based_on_deliveries": len(lead_times),
                 "model_version": "v1.0_statistical",
-                "updated_at": datetime.now()
+                "updated_at": datetime.now(),
             }
 
     except HTTPException:
@@ -355,10 +341,11 @@ def forecast_supplier_lead_time(supplier_id: int) -> Dict[str, Any]:
 
 # Cash Flow Forecasting
 
+
 @app.get("/forecast/cash-flow")
 def forecast_cash_flow(
     horizon_days: int = Query(30, ge=1, le=365),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Forecast net cash flow for the next N days using linear regression on historical transactions."""
     try:
         with engine.connect() as conn:
@@ -397,10 +384,7 @@ def forecast_cash_flow(
             outflows = outflows[:min_len]
 
             if len(inflows) < 14:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Insufficient historical data"
-                )
+                raise HTTPException(status_code=400, detail="Insufficient historical data")
 
             # Forecast inflows and outflows separately
             X = np.arange(len(inflows)).reshape(-1, 1)
@@ -427,12 +411,12 @@ def forecast_cash_flow(
                         "day": i + 1,
                         "forecasted_inflow": float(forecasted_inflows[i]),
                         "forecasted_outflow": float(forecasted_outflows[i]),
-                        "net_flow": float(forecasted_net[i])
+                        "net_flow": float(forecasted_net[i]),
                     }
                     for i in range(len(forecasted_inflows))
                 ],
                 "model_version": "v1.0_linear_regression",
-                "updated_at": datetime.now()
+                "updated_at": datetime.now(),
             }
 
     except HTTPException:
@@ -442,12 +426,12 @@ def forecast_cash_flow(
         raise HTTPException(status_code=500, detail="Error generating forecast")
 
 
-
 @app.get("/config/settings")
-def get_service_settings() -> Dict[str, Any]:
+def get_service_settings() -> dict[str, Any]:
     """Return non-sensitive service configuration for diagnostics."""
     try:
         from config.settings import Settings
+
         return {"service": "forecasting-service", "config": Settings.as_dict()}
     except Exception as e:
         logger.warning("Settings module not available: %s", e)
@@ -456,4 +440,5 @@ def get_service_settings() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8001, workers=2)

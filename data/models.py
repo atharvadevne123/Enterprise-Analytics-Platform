@@ -8,7 +8,6 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,6 +21,7 @@ class BaseAnalyticsModel(BaseModel):
 # ============================================================================
 # ENUMS
 # ============================================================================
+
 
 class OrderStatus(str, Enum):
     PENDING = "pending"
@@ -65,13 +65,14 @@ class CustomerSegment(str, Enum):
 # E-COMMERCE MODELS
 # ============================================================================
 
+
 class Product(BaseAnalyticsModel):
     """Product catalogue entry used across e-commerce and supply-chain domains."""
 
     product_id: int
     product_name: str
     category: str
-    subcategory: Optional[str] = None
+    subcategory: str | None = None
     supplier_id: int
     cost: Decimal
     list_price: Decimal
@@ -88,21 +89,23 @@ class Customer(BaseAnalyticsModel):
 
     customer_id: int
     customer_name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
     segment: CustomerSegment = CustomerSegment.REGULAR
     lifetime_value: Decimal = Decimal("0.00")
-    country: Optional[str] = None
-    region: Optional[str] = None
+    country: str | None = None
+    region: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class OrderEvent(BaseAnalyticsModel):
     """Order event from e-commerce system (Kafka topic: ecommerce.orders)"""
+
     order_id: int
     customer_id: int
     product_id: int
-    supplier_id: Optional[int] = None
+    supplier_id: int | None = None
     order_date: datetime
     quantity: int
     list_price: Decimal
@@ -114,40 +117,46 @@ class OrderEvent(BaseAnalyticsModel):
     cost_amount: Decimal
     order_status: OrderStatus = OrderStatus.PENDING
     payment_status: PaymentStatus = PaymentStatus.PENDING
-    shipping_status: Optional[str] = None
+    shipping_status: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
 
 class InventoryEvent(BaseAnalyticsModel):
     """Inventory update event (Kafka topic: ecommerce.inventory)"""
+
     product_id: int
     stock_level: int
     previous_level: int
     change_quantity: int
     change_reason: str  # Purchase, Sale, Adjustment, Damage
-    warehouse_id: Optional[int] = None
+    warehouse_id: int | None = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
 
 # ============================================================================
 # SUPPLY CHAIN MODELS
 # ============================================================================
 
+
 class Supplier(BaseAnalyticsModel):
     supplier_id: int
     supplier_name: str
     country: str
-    region: Optional[str] = None
+    region: str | None = None
     on_time_delivery_pct: Decimal = Decimal("0.00")
     quality_score: Decimal = Decimal("0.00")
     lead_time_days: int
-    contract_start_date: Optional[datetime] = None
-    contract_end_date: Optional[datetime] = None
+    contract_start_date: datetime | None = None
+    contract_end_date: datetime | None = None
     is_active: bool = True
-    payment_terms: Optional[str] = None
+    payment_terms: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class PurchaseOrderEvent(BaseAnalyticsModel):
     """Purchase order event (Kafka topic: supply_chain.purchase_orders)"""
+
     po_id: int
     supplier_id: int
     product_id: int
@@ -159,8 +168,10 @@ class PurchaseOrderEvent(BaseAnalyticsModel):
     po_status: str  # Draft, Sent, Confirmed, Received, Cancelled
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class DeliveryEvent(BaseAnalyticsModel):
     """Delivery event from suppliers (Kafka topic: supply_chain.deliveries)"""
+
     delivery_id: int
     po_id: int
     supplier_id: int
@@ -179,17 +190,19 @@ class DeliveryEvent(BaseAnalyticsModel):
     delivery_status: DeliveryStatus = DeliveryStatus.PENDING
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 # ============================================================================
 # FINANCIAL MODELS
 # ============================================================================
+
 
 class GLAccount(BaseAnalyticsModel):
     gl_account_id: str
     account_name: str
     account_type: str  # Asset, Liability, Equity, Revenue, Expense
-    account_subtype: Optional[str] = None
-    department: Optional[str] = None
-    cost_center: Optional[str] = None
+    account_subtype: str | None = None
+    department: str | None = None
+    cost_center: str | None = None
     is_balance_sheet: bool = False
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -197,46 +210,54 @@ class GLAccount(BaseAnalyticsModel):
 
 class TransactionEvent(BaseAnalyticsModel):
     """Financial transaction event (Kafka topic: financials.transactions)"""
+
     transaction_id: int
     gl_account_id: str
     debit_amount: Decimal = Decimal("0.00")
     credit_amount: Decimal = Decimal("0.00")
     net_amount: Decimal
     transaction_type: TransactionType
-    description: Optional[str] = None
-    reference_id: Optional[str] = None  # Order ID, PO ID, Invoice ID
+    description: str | None = None
+    reference_id: str | None = None  # Order ID, PO ID, Invoice ID
     currency_code: str = "USD"
     exchange_rate: Decimal = Decimal("1.0")
     is_intercompany: bool = False
     transaction_date: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class BudgetEvent(BaseAnalyticsModel):
     """Budget event (Kafka topic: financials.budgets)"""
+
     budget_id: int
     gl_account_id: str
     budget_amount: Decimal
     budget_type: str  # Monthly, Quarterly, Annual
     budget_version: int
     budget_year: int
-    budget_month: Optional[int] = None
-    budget_quarter: Optional[int] = None
+    budget_month: int | None = None
+    budget_quarter: int | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
 
 class ActualEvent(BaseAnalyticsModel):
     """Actual financial event (Kafka topic: financials.actuals)"""
+
     actual_id: int
     gl_account_id: str
     actual_amount: Decimal
     transaction_date: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 # ============================================================================
 # KPI AND METRICS MODELS
 # ============================================================================
 
+
 class ECommerceMetrics(BaseAnalyticsModel):
     """Daily e-commerce KPI metrics"""
+
     date: datetime
     total_orders: int
     total_customers: int
@@ -250,8 +271,10 @@ class ECommerceMetrics(BaseAnalyticsModel):
     returned_orders: int = 0
     refunded_amount: Decimal = Decimal("0.00")
 
+
 class SupplyChainMetrics(BaseAnalyticsModel):
     """Daily supply chain KPI metrics"""
+
     date: datetime
     total_deliveries: int
     on_time_deliveries: int
@@ -262,8 +285,10 @@ class SupplyChainMetrics(BaseAnalyticsModel):
     cancelled_orders: int = 0
     delayed_deliveries: int = 0
 
+
 class FinancialMetrics(BaseAnalyticsModel):
     """Daily financial KPI metrics"""
+
     date: datetime
     total_revenue: Decimal
     total_expense: Decimal
@@ -275,8 +300,10 @@ class FinancialMetrics(BaseAnalyticsModel):
     accounts_receivable: Decimal = Decimal("0.00")
     accounts_payable: Decimal = Decimal("0.00")
 
+
 class UnifiedKPIMetrics(BaseAnalyticsModel):
     """Unified cross-domain KPI metrics"""
+
     date: datetime
     revenue_per_supplier: Decimal
     profit_per_product: Decimal
@@ -286,12 +313,15 @@ class UnifiedKPIMetrics(BaseAnalyticsModel):
     return_rate_pct: Decimal = Decimal("0.00")
     supplier_performance_score: Decimal = Decimal("0.00")
 
+
 # ============================================================================
 # ANOMALY DETECTION MODELS
 # ============================================================================
 
+
 class AnomalyAlert(BaseAnalyticsModel):
     """Anomaly detected in metrics"""
+
     alert_id: str
     severity: str  # CRITICAL, WARNING, INFO
     domain: str  # ecommerce, supply_chain, financial
@@ -300,17 +330,20 @@ class AnomalyAlert(BaseAnalyticsModel):
     expected_range_min: Decimal
     expected_range_max: Decimal
     deviation_pct: Decimal
-    root_cause: Optional[str] = None
-    recommended_action: Optional[str] = None
+    root_cause: str | None = None
+    recommended_action: str | None = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     resolved: bool = False
+
 
 # ============================================================================
 # FORECAST MODELS
 # ============================================================================
 
+
 class DemandForecast(BaseAnalyticsModel):
     """Product demand forecast"""
+
     forecast_id: str
     product_id: int
     forecast_date: datetime
@@ -320,8 +353,10 @@ class DemandForecast(BaseAnalyticsModel):
     model_version: str
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class LeadTimeForecast(BaseAnalyticsModel):
     """Supplier lead time forecast"""
+
     forecast_id: str
     supplier_id: int
     forecast_date: datetime
@@ -330,8 +365,10 @@ class LeadTimeForecast(BaseAnalyticsModel):
     model_version: str
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class CashFlowForecast(BaseAnalyticsModel):
     """Financial cash flow forecast"""
+
     forecast_id: str
     forecast_date: datetime
     forecast_horizon_days: int
@@ -342,15 +379,17 @@ class CashFlowForecast(BaseAnalyticsModel):
     model_version: str
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 # ============================================================================
 # REQUEST MODELS
 # ============================================================================
 
+
 class ForecastConfig(BaseAnalyticsModel):
     """Configuration parameters for a forecast run."""
 
-    product_id: Optional[int] = None
-    supplier_id: Optional[int] = None
+    product_id: int | None = None
+    supplier_id: int | None = None
     horizon_days: int = Field(default=30, ge=1, le=365)
     model_type: str = Field(default="linear_regression")
     confidence_threshold: Decimal = Field(default=Decimal("0.70"))

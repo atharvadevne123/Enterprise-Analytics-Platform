@@ -63,22 +63,27 @@ class TestOrderStatusTransitions:
 class TestModelImports:
     def test_import_order_status(self):
         from data.models import OrderStatus
+
         assert OrderStatus is not None
 
     def test_import_product_model(self):
         from data.models import Product
+
         assert Product is not None
 
     def test_import_order_event(self):
         from data.models import OrderEvent
+
         assert OrderEvent is not None
 
     def test_import_delivery_event(self):
         from data.models import DeliveryEvent
+
         assert DeliveryEvent is not None
 
     def test_import_transaction_event(self):
         from data.models import TransactionEvent
+
         assert TransactionEvent is not None
 
 
@@ -86,8 +91,10 @@ class TestProductModel:
     """Unit tests for the Product Pydantic model."""
 
     def test_product_requires_product_id(self):
-        from data.models import Product
         from decimal import Decimal
+
+        from data.models import Product
+
         p = Product(
             product_id=1,
             product_name="Widget",
@@ -99,20 +106,32 @@ class TestProductModel:
         assert p.product_id == 1
 
     def test_product_defaults_active_true(self):
-        from data.models import Product
         from decimal import Decimal
+
+        from data.models import Product
+
         p = Product(
-            product_id=2, product_name="Gadget", category="electronics",
-            supplier_id=1, cost=Decimal("10"), list_price=Decimal("25"),
+            product_id=2,
+            product_name="Gadget",
+            category="electronics",
+            supplier_id=1,
+            cost=Decimal("10"),
+            list_price=Decimal("25"),
         )
         assert p.is_active is True
 
     def test_product_default_stock_zero(self):
-        from data.models import Product
         from decimal import Decimal
+
+        from data.models import Product
+
         p = Product(
-            product_id=3, product_name="Tool", category="tools",
-            supplier_id=2, cost=Decimal("3"), list_price=Decimal("7"),
+            product_id=3,
+            product_name="Tool",
+            category="tools",
+            supplier_id=2,
+            cost=Decimal("3"),
+            list_price=Decimal("7"),
         )
         assert p.current_stock_level == 0
 
@@ -123,11 +142,16 @@ class TestOrderEventModel:
     def _make_order(self, **overrides):
         from datetime import datetime
         from decimal import Decimal
+
         from data.models import OrderEvent
+
         base = dict(
-            order_id=1, customer_id=10, product_id=100,
+            order_id=1,
+            customer_id=10,
+            product_id=100,
             order_date=datetime(2024, 1, 15, 12, 0),
-            quantity=2, list_price=Decimal("50.00"),
+            quantity=2,
+            list_price=Decimal("50.00"),
             order_amount=Decimal("100.00"),
             total_amount=Decimal("110.00"),
             cost_amount=Decimal("40.00"),
@@ -137,16 +161,19 @@ class TestOrderEventModel:
 
     def test_order_default_status_pending(self):
         from data.models import OrderStatus
+
         order = self._make_order()
         assert order.order_status == OrderStatus.PENDING
 
     def test_order_default_payment_pending(self):
         from data.models import PaymentStatus
+
         order = self._make_order()
         assert order.payment_status == PaymentStatus.PENDING
 
     def test_order_discount_defaults_zero(self):
         from decimal import Decimal
+
         order = self._make_order()
         assert order.discount_amount == Decimal("0.00")
 
@@ -160,19 +187,21 @@ class TestCustomerModel:
     """Unit tests for the Customer Pydantic model."""
 
     def _make_customer(self, **overrides):
-        from datetime import datetime
         from data.models import Customer
+
         base = dict(customer_id=1, customer_name="Alice")
         base.update(overrides)
         return Customer(**base)
 
     def test_customer_default_segment_regular(self):
         from data.models import CustomerSegment
+
         c = self._make_customer()
         assert c.segment == CustomerSegment.REGULAR
 
     @pytest.mark.parametrize("segment_val", ["vip", "regular", "new", "inactive"])
     def test_customer_segment_enum_assignment(self, segment_val):
         from data.models import CustomerSegment
+
         c = self._make_customer(segment=CustomerSegment(segment_val))
         assert c.segment.value == segment_val

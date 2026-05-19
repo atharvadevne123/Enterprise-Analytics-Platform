@@ -7,14 +7,12 @@ from __future__ import annotations
 
 import logging
 import os
+import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
-
-import uuid
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator
 from sqlalchemy import create_engine, text
 
@@ -49,10 +47,7 @@ async def add_correlation_id(request: Request, call_next):
 
 
 # Database connection
-DB_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:password@localhost:5432/analytics_warehouse"
-)
+DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/analytics_warehouse")
 
 
 def _make_engine(url: str):
@@ -87,8 +82,8 @@ class KPIMetric(BaseModel):
     date: date
     metric_name: str
     value: Decimal
-    target: Optional[Decimal] = None
-    variance_pct: Optional[Decimal] = None
+    target: Decimal | None = None
+    variance_pct: Decimal | None = None
 
     class Config:
         json_encoders = {Decimal: str}
@@ -142,7 +137,7 @@ class UnifiedKPIs(BaseModel):
 
 # Root
 @app.get("/")
-def root() -> Dict[str, Any]:
+def root() -> dict[str, Any]:
     """Return service metadata and available endpoint list."""
     return {
         "service": "analytics-api",
@@ -157,26 +152,26 @@ def root() -> Dict[str, Any]:
             "/financial/metrics/{start_date}/{end_date}",
             "/financial/budget-vs-actual/{gl_account_id}",
             "/kpis/unified/{start_date}/{end_date}",
-            "/kpis/summary"
-        ]
+            "/kpis/summary",
+        ],
     }
 
 
 # Health check
 @app.get("/health")
-def health_check() -> Dict[str, str]:
+def health_check() -> dict[str, str]:
     """Return service health status."""
     return {"status": "healthy", "service": "analytics-api"}
 
 
 @app.get("/version")
-def version() -> Dict[str, str]:
+def version() -> dict[str, str]:
     """Return service version information."""
     return {"service": "analytics-api", "version": "1.0.0", "python": "3.10+"}
 
 
 @app.get("/metrics")
-def metrics() -> Dict[str, Any]:
+def metrics() -> dict[str, Any]:
     """Return basic service metrics."""
     return {
         "service": "analytics-api",
@@ -187,7 +182,7 @@ def metrics() -> Dict[str, Any]:
 
 
 @app.get("/readyz")
-def readiness() -> Dict[str, Any]:
+def readiness() -> dict[str, Any]:
     """Kubernetes readiness probe — verifies DB connection is reachable."""
     try:
         with engine.connect() as conn:
@@ -200,13 +195,13 @@ def readiness() -> Dict[str, Any]:
 
 # E-Commerce Endpoints
 
-@app.get("/ecommerce/metrics/{start_date}/{end_date}",
-         response_model=List[ECommerceMetrics])
+
+@app.get("/ecommerce/metrics/{start_date}/{end_date}", response_model=list[ECommerceMetrics])
 def get_ecommerce_metrics(
     start_date: date,
     end_date: date,
     granularity: str = Query("daily", pattern="^(daily|weekly|monthly)$"),
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Get e-commerce KPI metrics for date range"""
     try:
         with engine.connect() as conn:
@@ -224,10 +219,7 @@ def get_ecommerce_metrics(
                 ORDER BY date DESC
             """)
 
-            result = conn.execute(
-                query,
-                {"start_date": start_date, "end_date": end_date}
-            )
+            result = conn.execute(query, {"start_date": start_date, "end_date": end_date})
 
             metrics = [dict(row._mapping) for row in result]
             return metrics
@@ -240,7 +232,7 @@ def get_ecommerce_metrics(
 @app.get("/ecommerce/conversion-rate")
 def get_conversion_rate(
     days: int = Query(30, ge=1, le=365),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get conversion rate for last N days"""
     try:
         end_date = datetime.now().date()
@@ -257,17 +249,14 @@ def get_conversion_rate(
                 WHERE date BETWEEN :start_date AND :end_date
             """)
 
-            result = conn.execute(
-                query,
-                {"start_date": start_date, "end_date": end_date}
-            ).fetchone()
+            result = conn.execute(query, {"start_date": start_date, "end_date": end_date}).fetchone()
 
             return {
                 "period_days": days,
                 "average": float(result[0]) if result[0] else 0,
                 "minimum": float(result[1]) if result[1] else 0,
                 "maximum": float(result[2]) if result[2] else 0,
-                "stddev": float(result[3]) if result[3] else 0
+                "stddev": float(result[3]) if result[3] else 0,
             }
 
     except Exception as e:
@@ -277,12 +266,12 @@ def get_conversion_rate(
 
 # Supply Chain Endpoints
 
-@app.get("/supply-chain/metrics/{start_date}/{end_date}",
-         response_model=List[SupplyChainMetrics])
+
+@app.get("/supply-chain/metrics/{start_date}/{end_date}", response_model=list[SupplyChainMetrics])
 def get_supply_chain_metrics(
     start_date: date,
     end_date: date,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Get supply chain KPI metrics"""
     try:
         with engine.connect() as conn:
@@ -298,10 +287,7 @@ def get_supply_chain_metrics(
                 ORDER BY date DESC
             """)
 
-            result = conn.execute(
-                query,
-                {"start_date": start_date, "end_date": end_date}
-            )
+            result = conn.execute(query, {"start_date": start_date, "end_date": end_date})
 
             metrics = [dict(row._mapping) for row in result]
             return metrics
@@ -312,7 +298,7 @@ def get_supply_chain_metrics(
 
 
 @app.get("/supply-chain/supplier/{supplier_id}/performance")
-def get_supplier_performance(supplier_id: int) -> Dict[str, Any]:
+def get_supplier_performance(supplier_id: int) -> dict[str, Any]:
     """Get supplier performance metrics"""
     try:
         with engine.connect() as conn:
@@ -327,10 +313,7 @@ def get_supplier_performance(supplier_id: int) -> Dict[str, Any]:
                 WHERE supplier_id = :supplier_id
             """)
 
-            result = conn.execute(
-                query,
-                {"supplier_id": supplier_id}
-            ).fetchone()
+            result = conn.execute(query, {"supplier_id": supplier_id}).fetchone()
 
             if not result:
                 raise HTTPException(status_code=404, detail="Supplier not found")
@@ -340,7 +323,7 @@ def get_supplier_performance(supplier_id: int) -> Dict[str, Any]:
                 "supplier_name": result[1],
                 "on_time_delivery_pct": float(result[2]),
                 "quality_score": float(result[3]),
-                "lead_time_days": result[4]
+                "lead_time_days": result[4],
             }
 
     except HTTPException:
@@ -352,12 +335,12 @@ def get_supplier_performance(supplier_id: int) -> Dict[str, Any]:
 
 # Financial Endpoints
 
-@app.get("/financial/metrics/{start_date}/{end_date}",
-         response_model=List[FinancialMetrics])
+
+@app.get("/financial/metrics/{start_date}/{end_date}", response_model=list[FinancialMetrics])
 def get_financial_metrics(
     start_date: date,
     end_date: date,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Get financial KPI metrics"""
     try:
         with engine.connect() as conn:
@@ -373,10 +356,7 @@ def get_financial_metrics(
                 ORDER BY date DESC
             """)
 
-            result = conn.execute(
-                query,
-                {"start_date": start_date, "end_date": end_date}
-            )
+            result = conn.execute(query, {"start_date": start_date, "end_date": end_date})
 
             metrics = [dict(row._mapping) for row in result]
             return metrics
@@ -389,9 +369,9 @@ def get_financial_metrics(
 @app.get("/financial/budget-vs-actual/{gl_account_id}")
 def get_budget_vs_actual(
     gl_account_id: str,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-) -> Dict[str, Any]:
+    start_date: date | None = None,
+    end_date: date | None = None,
+) -> dict[str, Any]:
     """Get budget vs actual comparison"""
     if not start_date:
         start_date = (datetime.now() - timedelta(days=30)).date()
@@ -414,20 +394,11 @@ def get_budget_vs_actual(
             """)
 
             result = conn.execute(
-                query,
-                {
-                    "gl_account_id": gl_account_id,
-                    "start_date": start_date,
-                    "end_date": end_date
-                }
+                query, {"gl_account_id": gl_account_id, "start_date": start_date, "end_date": end_date}
             )
 
             data = [dict(row._mapping) for row in result]
-            return {
-                "gl_account_id": gl_account_id,
-                "period": {"start": start_date, "end": end_date},
-                "data": data
-            }
+            return {"gl_account_id": gl_account_id, "period": {"start": start_date, "end": end_date}, "data": data}
 
     except Exception as e:
         logger.error(f"Error fetching budget vs actual: {e}")
@@ -436,12 +407,12 @@ def get_budget_vs_actual(
 
 # Unified KPI Endpoints
 
-@app.get("/kpis/unified/{start_date}/{end_date}",
-         response_model=List[UnifiedKPIs])
+
+@app.get("/kpis/unified/{start_date}/{end_date}", response_model=list[UnifiedKPIs])
 def get_unified_kpis(
     start_date: date,
     end_date: date,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Get unified cross-domain KPIs"""
     try:
         with engine.connect() as conn:
@@ -457,10 +428,7 @@ def get_unified_kpis(
                 ORDER BY date DESC
             """)
 
-            result = conn.execute(
-                query,
-                {"start_date": start_date, "end_date": end_date}
-            )
+            result = conn.execute(query, {"start_date": start_date, "end_date": end_date})
 
             metrics = [dict(row._mapping) for row in result]
             return metrics
@@ -471,7 +439,7 @@ def get_unified_kpis(
 
 
 @app.get("/kpis/summary")
-def get_kpi_summary() -> Dict[str, Any]:
+def get_kpi_summary() -> dict[str, Any]:
     """Get current KPI summary — uses most recent date that has data"""
     try:
         with engine.connect() as conn:
@@ -490,7 +458,7 @@ def get_kpi_summary() -> Dict[str, Any]:
                 FROM analytics.ecommerce_daily_metrics
                 WHERE date = :date
                 """),
-                {"date": end_date}
+                {"date": end_date},
             ).fetchone()
 
             sc = conn.execute(
@@ -499,7 +467,7 @@ def get_kpi_summary() -> Dict[str, Any]:
                 FROM analytics.supply_chain_daily_metrics
                 WHERE date = :date
                 """),
-                {"date": end_date}
+                {"date": end_date},
             ).fetchone()
 
             fin = conn.execute(
@@ -508,7 +476,7 @@ def get_kpi_summary() -> Dict[str, Any]:
                 FROM analytics.financial_daily_metrics
                 WHERE date = :date
                 """),
-                {"date": end_date}
+                {"date": end_date},
             ).fetchone()
 
             return {
@@ -516,16 +484,10 @@ def get_kpi_summary() -> Dict[str, Any]:
                 "ecommerce": {
                     "revenue": float(ecom[0]) if ecom else 0,
                     "aov": float(ecom[1]) if ecom else 0,
-                    "conversion_rate": float(ecom[2]) if ecom else 0
+                    "conversion_rate": float(ecom[2]) if ecom else 0,
                 },
-                "supply_chain": {
-                    "on_time_pct": float(sc[0]) if sc else 0,
-                    "lead_time_days": float(sc[1]) if sc else 0
-                },
-                "financial": {
-                    "net_income": float(fin[0]) if fin else 0,
-                    "margin_pct": float(fin[1]) if fin else 0
-                }
+                "supply_chain": {"on_time_pct": float(sc[0]) if sc else 0, "lead_time_days": float(sc[1]) if sc else 0},
+                "financial": {"net_income": float(fin[0]) if fin else 0, "margin_pct": float(fin[1]) if fin else 0},
             }
 
     except Exception as e:
@@ -533,12 +495,12 @@ def get_kpi_summary() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail="Error fetching summary")
 
 
-
 @app.get("/config/settings")
-def get_service_settings() -> Dict[str, Any]:
+def get_service_settings() -> dict[str, Any]:
     """Return non-sensitive service configuration for diagnostics."""
     try:
         from config.settings import Settings
+
         return {"service": "analytics-api", "config": Settings.as_dict()}
     except Exception as e:
         logger.warning("Settings module not available: %s", e)
@@ -553,4 +515,5 @@ def get_service_settings() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000, workers=4)

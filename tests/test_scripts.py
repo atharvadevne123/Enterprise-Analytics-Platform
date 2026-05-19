@@ -11,6 +11,7 @@ import pytest
 class TestHealthCheckScript:
     def test_health_check_module_importable(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location("health_check", "scripts/health_check.py")
         assert spec is not None
 
@@ -37,6 +38,7 @@ class TestHealthCheckScript:
 class TestValidateEnvScript:
     def test_validate_env_module_importable(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location("validate_env", "scripts/validate_env.py")
         assert spec is not None
 
@@ -56,6 +58,7 @@ class TestValidateEnvScript:
         env_file.write_text("DATABASE_URL=postgres://...\nKAFKA_BROKERS=localhost:9092\n# comment\n")
         sys.path.insert(0, str(os.getcwd()))
         import importlib.util
+
         spec = importlib.util.spec_from_file_location("validate_env", "scripts/validate_env.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -65,6 +68,7 @@ class TestValidateEnvScript:
 
     def test_check_env_vars_detects_missing(self):
         import importlib.util
+
         spec = importlib.util.spec_from_file_location("validate_env", "scripts/validate_env.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -73,6 +77,7 @@ class TestValidateEnvScript:
 
     def test_check_env_vars_detects_present(self):
         import importlib.util
+
         os.environ["TEST_VAR_ABC123"] = "test_value"
         spec = importlib.util.spec_from_file_location("validate_env", "scripts/validate_env.py")
         mod = importlib.util.module_from_spec(spec)
@@ -85,9 +90,8 @@ class TestValidateEnvScript:
 class TestGenerateSampleDataScript:
     def test_generate_sample_data_module_importable(self):
         import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "generate_sample_data", "scripts/generate_sample_data.py"
-        )
+
+        spec = importlib.util.spec_from_file_location("generate_sample_data", "scripts/generate_sample_data.py")
         assert spec is not None
 
     def test_generate_sample_data_has_main(self):
@@ -100,12 +104,12 @@ class TestGenerateSampleDataScript:
 
     def test_generate_sample_data_writes_csvs(self, tmp_path):
         import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "generate_sample_data", "scripts/generate_sample_data.py"
-        )
+
+        spec = importlib.util.spec_from_file_location("generate_sample_data", "scripts/generate_sample_data.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         from pathlib import Path
+
         out = Path(tmp_path)
         mod.write_ecommerce(out, 5)
         mod.write_supply_chain(out, 5)
@@ -118,9 +122,8 @@ class TestGenerateSampleDataScript:
         import csv as csv_module
         import importlib.util
         from pathlib import Path
-        spec = importlib.util.spec_from_file_location(
-            "generate_sample_data", "scripts/generate_sample_data.py"
-        )
+
+        spec = importlib.util.spec_from_file_location("generate_sample_data", "scripts/generate_sample_data.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         out = Path(tmp_path)
@@ -133,13 +136,13 @@ class TestGenerateSampleDataScript:
     def test_generate_sample_data_parametrized_rows(self, tmp_path, rows):
         import importlib.util
         from pathlib import Path
-        spec = importlib.util.spec_from_file_location(
-            "generate_sample_data", "scripts/generate_sample_data.py"
-        )
+
+        spec = importlib.util.spec_from_file_location("generate_sample_data", "scripts/generate_sample_data.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         out = Path(tmp_path)
         mod.write_financial(out, rows)
         import csv as csv_module
+
         with (out / "financial_daily_metrics.csv").open() as f:
             assert len(list(csv_module.DictReader(f))) == rows

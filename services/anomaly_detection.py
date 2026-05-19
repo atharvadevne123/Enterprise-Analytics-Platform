@@ -7,13 +7,12 @@ from __future__ import annotations
 
 import logging
 import os
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
-import uuid
-
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
@@ -48,10 +47,7 @@ async def add_correlation_id(request: Request, call_next):
 
 
 # Database connection
-DB_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:password@localhost:5432/analytics_warehouse"
-)
+DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/analytics_warehouse")
 
 
 def _make_engine(url: str):
@@ -83,7 +79,7 @@ class AnomalyAlert(BaseModel):
 
 # Root
 @app.get("/")
-def root() -> Dict[str, Any]:
+def root() -> dict[str, Any]:
     """Return service metadata and available endpoint list."""
     return {
         "service": "anomaly-detection",
@@ -96,26 +92,26 @@ def root() -> Dict[str, Any]:
             "/detect/supply-chain/on-time-delivery",
             "/detect/financial/budget-variance",
             "/alerts/active",
-            "/alerts/{alert_id}/acknowledge"
-        ]
+            "/alerts/{alert_id}/acknowledge",
+        ],
     }
 
 
 # Health check
 @app.get("/health")
-def health_check() -> Dict[str, str]:
+def health_check() -> dict[str, str]:
     """Return service health status."""
     return {"status": "healthy", "service": "anomaly-detection"}
 
 
 @app.get("/version")
-def version() -> Dict[str, str]:
+def version() -> dict[str, str]:
     """Return service version information."""
     return {"service": "anomaly-detection", "version": "1.0.0", "python": "3.10+"}
 
 
 @app.get("/metrics")
-def metrics() -> Dict[str, Any]:
+def metrics() -> dict[str, Any]:
     """Return basic service metrics."""
     return {
         "service": "anomaly-detection",
@@ -126,7 +122,7 @@ def metrics() -> Dict[str, Any]:
 
 
 @app.get("/readyz")
-def readiness() -> Dict[str, Any]:
+def readiness() -> dict[str, Any]:
     """Kubernetes readiness probe — verifies DB connection is reachable."""
     try:
         with engine.connect() as conn:
@@ -138,7 +134,7 @@ def readiness() -> Dict[str, Any]:
 
 
 def detect_statistical_anomaly(
-    values: List[float],
+    values: list[float],
     current_value: float,
     threshold_sigma: float = 2.0,
 ) -> tuple[bool, float, float, float]:
@@ -169,7 +165,7 @@ def detect_statistical_anomaly(
 
 
 def detect_iqr_anomaly(
-    values: List[float],
+    values: list[float],
     current_value: float,
     multiplier: float = 1.5,
 ) -> tuple[bool, float, float]:
@@ -199,8 +195,9 @@ def detect_iqr_anomaly(
 
 # E-Commerce Anomalies
 
+
 @app.post("/detect/ecommerce/revenue")
-def detect_revenue_anomaly(current_date: Optional[date] = None) -> Dict[str, Any]:
+def detect_revenue_anomaly(current_date: date | None = None) -> dict[str, Any]:
     """Detect anomaly in e-commerce revenue"""
     if not current_date:
         current_date = datetime.now().date()
@@ -226,10 +223,7 @@ def detect_revenue_anomaly(current_date: Optional[date] = None) -> Dict[str, Any
                 WHERE date = :date
             """)
 
-            current_result = conn.execute(
-                current_query,
-                {"date": current_date}
-            ).fetchone()
+            current_result = conn.execute(current_query, {"date": current_date}).fetchone()
 
             if not current_result:
                 raise HTTPException(status_code=404, detail="No data for date")
@@ -238,9 +232,7 @@ def detect_revenue_anomaly(current_date: Optional[date] = None) -> Dict[str, Any
 
             # Detect anomaly
             is_anomaly, z_score, mean, stddev = detect_statistical_anomaly(
-                historical,
-                current_value,
-                threshold_sigma=2.0
+                historical, current_value, threshold_sigma=2.0
             )
 
             if is_anomaly:
@@ -259,7 +251,7 @@ def detect_revenue_anomaly(current_date: Optional[date] = None) -> Dict[str, Any
                     "z_score": z_score,
                     "deviation_pct": deviation_pct,
                     "timestamp": datetime.now(),
-                    "recommendation": f"Revenue {('↑ up' if current_value > mean else '↓ down')} {deviation_pct:.1f}%. Check for system issues or special events."
+                    "recommendation": f"Revenue {('↑ up' if current_value > mean else '↓ down')} {deviation_pct:.1f}%. Check for system issues or special events.",
                 }
             else:
                 return {
@@ -270,7 +262,7 @@ def detect_revenue_anomaly(current_date: Optional[date] = None) -> Dict[str, Any
                     "current_value": current_value,
                     "expected_value": mean,
                     "deviation_pct": 0,
-                    "message": "No anomaly detected"
+                    "message": "No anomaly detected",
                 }
 
     except Exception as e:
@@ -279,7 +271,7 @@ def detect_revenue_anomaly(current_date: Optional[date] = None) -> Dict[str, Any
 
 
 @app.post("/detect/ecommerce/conversion-rate")
-def detect_conversion_anomaly(current_date: Optional[date] = None) -> Dict[str, Any]:
+def detect_conversion_anomaly(current_date: date | None = None) -> dict[str, Any]:
     """Detect anomaly in conversion rate"""
     if not current_date:
         current_date = datetime.now().date()
@@ -305,10 +297,7 @@ def detect_conversion_anomaly(current_date: Optional[date] = None) -> Dict[str, 
                 WHERE date = :date
             """)
 
-            current_result = conn.execute(
-                current_query,
-                {"date": current_date}
-            ).fetchone()
+            current_result = conn.execute(current_query, {"date": current_date}).fetchone()
 
             if not current_result:
                 raise HTTPException(status_code=404, detail="No data for date")
@@ -317,9 +306,7 @@ def detect_conversion_anomaly(current_date: Optional[date] = None) -> Dict[str, 
 
             # Detect anomaly
             is_anomaly, z_score, mean, stddev = detect_statistical_anomaly(
-                historical,
-                current_value,
-                threshold_sigma=2.0
+                historical, current_value, threshold_sigma=2.0
             )
 
             if is_anomaly:
@@ -335,7 +322,7 @@ def detect_conversion_anomaly(current_date: Optional[date] = None) -> Dict[str, 
                     "expected_value": mean,
                     "deviation_pct": deviation_pct,
                     "timestamp": datetime.now(),
-                    "recommendation": "Check website performance, marketing campaigns, or customer experience issues."
+                    "recommendation": "Check website performance, marketing campaigns, or customer experience issues.",
                 }
 
             return {"message": "No anomaly detected"}
@@ -347,8 +334,9 @@ def detect_conversion_anomaly(current_date: Optional[date] = None) -> Dict[str, 
 
 # Supply Chain Anomalies
 
+
 @app.post("/detect/supply-chain/on-time-delivery")
-def detect_delivery_anomaly(current_date: Optional[date] = None) -> Dict[str, Any]:
+def detect_delivery_anomaly(current_date: date | None = None) -> dict[str, Any]:
     """Detect anomaly in on-time delivery percentage"""
     if not current_date:
         current_date = datetime.now().date()
@@ -374,10 +362,7 @@ def detect_delivery_anomaly(current_date: Optional[date] = None) -> Dict[str, An
                 WHERE date = :date
             """)
 
-            current_result = conn.execute(
-                current_query,
-                {"date": current_date}
-            ).fetchone()
+            current_result = conn.execute(current_query, {"date": current_date}).fetchone()
 
             if not current_result:
                 raise HTTPException(status_code=404, detail="No data for date")
@@ -386,9 +371,7 @@ def detect_delivery_anomaly(current_date: Optional[date] = None) -> Dict[str, An
 
             # Detect anomaly (below expected range is more critical)
             is_anomaly, z_score, mean, stddev = detect_statistical_anomaly(
-                historical,
-                current_value,
-                threshold_sigma=1.5
+                historical, current_value, threshold_sigma=1.5
             )
 
             if is_anomaly and current_value < mean:
@@ -404,7 +387,7 @@ def detect_delivery_anomaly(current_date: Optional[date] = None) -> Dict[str, An
                     "expected_value": mean,
                     "deviation_pct": deviation_pct,
                     "timestamp": datetime.now(),
-                    "recommendation": "Investigate supplier delays. Consider escalation or alternative suppliers."
+                    "recommendation": "Investigate supplier delays. Consider escalation or alternative suppliers.",
                 }
 
             return {"message": "No anomaly detected"}
@@ -416,11 +399,9 @@ def detect_delivery_anomaly(current_date: Optional[date] = None) -> Dict[str, An
 
 # Financial Anomalies
 
+
 @app.post("/detect/financial/budget-variance")
-def detect_budget_variance_anomaly(
-    gl_account_id: str,
-    current_date: Optional[date] = None
-):
+def detect_budget_variance_anomaly(gl_account_id: str, current_date: date | None = None):
     """Detect anomaly in budget variance"""
     if not current_date:
         current_date = datetime.now().date()
@@ -434,10 +415,7 @@ def detect_budget_variance_anomaly(
                 WHERE gl_account_id = :gl_account_id AND date = :date
             """)
 
-            result = conn.execute(
-                query,
-                {"gl_account_id": gl_account_id, "date": current_date}
-            ).fetchone()
+            result = conn.execute(query, {"gl_account_id": gl_account_id, "date": current_date}).fetchone()
 
             if not result:
                 raise HTTPException(status_code=404, detail="No budget data for date")
@@ -458,7 +436,7 @@ def detect_budget_variance_anomaly(
                     "variance_pct": variance_pct,
                     "variance_amount": variance_amount,
                     "timestamp": datetime.now(),
-                    "recommendation": f"Investigate budget variance of {variance_pct:.1f}%. Review actual spending patterns."
+                    "recommendation": f"Investigate budget variance of {variance_pct:.1f}%. Review actual spending patterns.",
                 }
 
             return {"message": "Budget variance within normal range"}
@@ -470,11 +448,12 @@ def detect_budget_variance_anomaly(
 
 # Get all active alerts
 
+
 @app.post("/detect/ecommerce/orders-count")
 def detect_orders_count_anomaly(
-    current_date: Optional[date] = None,
+    current_date: date | None = None,
     method: str = "zscore",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Detect anomaly in daily e-commerce order count using Z-score or IQR method.
 
     Args:
@@ -523,9 +502,7 @@ def detect_orders_count_anomaly(
                     "timestamp": datetime.now(),
                 }
 
-            is_anomaly, z_score, mean, stddev = detect_statistical_anomaly(
-                historical, current_value
-            )
+            is_anomaly, z_score, mean, stddev = detect_statistical_anomaly(historical, current_value)
             return {
                 "alert_id": f"ecom_orders_{current_date}",
                 "method": "zscore",
@@ -546,9 +523,9 @@ def detect_orders_count_anomaly(
 
 @app.get("/alerts/active")
 def get_active_alerts(
-    severity: Optional[str] = None,
-    domain: Optional[str] = None,
-) -> Dict[str, Any]:
+    severity: str | None = None,
+    domain: str | None = None,
+) -> dict[str, Any]:
     """Return all active anomaly alerts, optionally filtered by severity and domain."""
     try:
         # In production, this would query from an alerts table
@@ -558,10 +535,7 @@ def get_active_alerts(
             "alerts": [],
             "count": 0,
             "timestamp": datetime.now(),
-            "filters": {
-                "severity": severity,
-                "domain": domain
-            }
+            "filters": {"severity": severity, "domain": domain},
         }
 
     except Exception as e:
@@ -570,26 +544,22 @@ def get_active_alerts(
 
 
 @app.post("/alerts/{alert_id}/acknowledge")
-def acknowledge_alert(alert_id: str) -> Dict[str, str]:
+def acknowledge_alert(alert_id: str) -> dict[str, str]:
     """Acknowledge an alert"""
     try:
-        return {
-            "alert_id": alert_id,
-            "status": "acknowledged",
-            "timestamp": datetime.now()
-        }
+        return {"alert_id": alert_id, "status": "acknowledged", "timestamp": datetime.now()}
 
     except Exception as e:
         logger.error(f"Error acknowledging alert: {e}")
         raise HTTPException(status_code=500, detail="Error acknowledging alert")
 
 
-
 @app.get("/config/settings")
-def get_service_settings() -> Dict[str, Any]:
+def get_service_settings() -> dict[str, Any]:
     """Return non-sensitive service configuration for diagnostics."""
     try:
         from config.settings import Settings
+
         return {"service": "anomaly-detection", "config": Settings.as_dict()}
     except Exception as e:
         logger.warning("Settings module not available: %s", e)
@@ -598,4 +568,5 @@ def get_service_settings() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8002, workers=2)

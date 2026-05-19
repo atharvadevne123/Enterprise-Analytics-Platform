@@ -21,13 +21,13 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM"]
-ignore = ["E501", "B008", "SIM117"]
+ignore = ["E501", "B008", "SIM117", "B904"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["services", "messaging", "data", "spark", "airflow", "config"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "SIM"]
+"tests/*" = ["S101", "SIM", "B017", "B023"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

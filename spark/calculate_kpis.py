@@ -17,12 +17,13 @@ from pyspark.sql.functions import sum as spark_sum
 logger = logging.getLogger(__name__)
 
 # Initialize Spark session
-spark = SparkSession.builder \
-    .appName("calculate-kpis") \
-    .config("spark.executor.memory", os.getenv("SPARK_EXECUTOR_MEMORY", "4g")) \
-    .config("spark.executor.cores", os.getenv("SPARK_EXECUTOR_CORES", "2")) \
-    .config("spark.shuffle.partitions", "200") \
+spark = (
+    SparkSession.builder.appName("calculate-kpis")
+    .config("spark.executor.memory", os.getenv("SPARK_EXECUTOR_MEMORY", "4g"))
+    .config("spark.executor.cores", os.getenv("SPARK_EXECUTOR_CORES", "2"))
+    .config("spark.shuffle.partitions", "200")
     .getOrCreate()
+)
 
 spark.sparkContext.setLogLevel("INFO")
 
@@ -47,24 +48,22 @@ def calculate_ecommerce_kpis(spark: SparkSession) -> None:
     """
     logger.info("Calculating e-commerce KPIs...")
 
-    orders = spark.read \
-        .jdbc(db_url, "public.fact_orders", db_properties)
+    orders = spark.read.jdbc(db_url, "public.fact_orders", db_properties)
 
-    metrics = orders.groupBy("order_date_id").agg(
-        count("order_id").alias("total_orders"),
-        count("customer_id").alias("total_customers"),
-        spark_sum("total_amount").alias("total_revenue"),
-        spark_sum("cost_amount").alias("total_cost"),
-        spark_sum("gross_profit").alias("gross_profit"),
-        spark_round(avg("total_amount"), 2).alias("average_order_value"),
-    ).withColumn(
-        "dw_updated_at",
-        current_timestamp()
+    metrics = (
+        orders.groupBy("order_date_id")
+        .agg(
+            count("order_id").alias("total_orders"),
+            count("customer_id").alias("total_customers"),
+            spark_sum("total_amount").alias("total_revenue"),
+            spark_sum("cost_amount").alias("total_cost"),
+            spark_sum("gross_profit").alias("gross_profit"),
+            spark_round(avg("total_amount"), 2).alias("average_order_value"),
+        )
+        .withColumn("dw_updated_at", current_timestamp())
     )
 
-    metrics.write \
-        .mode("append") \
-        .jdbc(db_url, "analytics.ecommerce_daily_metrics", db_properties)
+    metrics.write.mode("append").jdbc(db_url, "analytics.ecommerce_daily_metrics", db_properties)
 
     logger.info("Calculated e-commerce KPIs for %d days", metrics.count())
 
@@ -77,27 +76,23 @@ def calculate_supply_chain_kpis(spark: SparkSession) -> None:
     """
     logger.info("Calculating supply chain KPIs...")
 
-    deliveries = spark.read \
-        .jdbc(db_url, "public.fact_deliveries", db_properties)
+    deliveries = spark.read.jdbc(db_url, "public.fact_deliveries", db_properties)
 
-    metrics = deliveries.groupBy("delivery_date_id").agg(
-        count("delivery_id").alias("total_deliveries"),
-        spark_sum("is_on_time").alias("on_time_deliveries"),
-        spark_round(avg("is_on_time") * 100, 2).alias("on_time_delivery_pct"),
-        spark_round(spark_sum("total_cost"), 2).alias("total_procurement_cost"),
-        spark_round(avg("lead_time_days"), 2).alias("average_lead_time_days"),
-        spark_round(avg("is_quality_pass") * 100, 2).alias("supplier_quality_score"),
-    ).withColumnRenamed(
-        "delivery_date_id",
-        "date_id"
-    ).withColumn(
-        "dw_updated_at",
-        current_timestamp()
+    metrics = (
+        deliveries.groupBy("delivery_date_id")
+        .agg(
+            count("delivery_id").alias("total_deliveries"),
+            spark_sum("is_on_time").alias("on_time_deliveries"),
+            spark_round(avg("is_on_time") * 100, 2).alias("on_time_delivery_pct"),
+            spark_round(spark_sum("total_cost"), 2).alias("total_procurement_cost"),
+            spark_round(avg("lead_time_days"), 2).alias("average_lead_time_days"),
+            spark_round(avg("is_quality_pass") * 100, 2).alias("supplier_quality_score"),
+        )
+        .withColumnRenamed("delivery_date_id", "date_id")
+        .withColumn("dw_updated_at", current_timestamp())
     )
 
-    metrics.write \
-        .mode("append") \
-        .jdbc(db_url, "analytics.supply_chain_daily_metrics", db_properties)
+    metrics.write.mode("append").jdbc(db_url, "analytics.supply_chain_daily_metrics", db_properties)
 
     logger.info("Calculated supply chain KPIs for %d days", metrics.count())
 
@@ -110,30 +105,20 @@ def calculate_financial_kpis(spark: SparkSession) -> None:
     """
     logger.info("Calculating financial KPIs...")
 
-    transactions = spark.read \
-        .jdbc(db_url, "public.fact_transactions", db_properties)
+    transactions = spark.read.jdbc(db_url, "public.fact_transactions", db_properties)
 
-    metrics = transactions.groupBy("transaction_date_id").agg(
-        spark_round(spark_sum(
-            col("debit_amount")
-        ), 2).alias("total_revenue"),
-        spark_round(spark_sum(
-            col("credit_amount")
-        ), 2).alias("total_expense"),
-    ).withColumnRenamed(
-        "transaction_date_id",
-        "date_id"
-    ).withColumn(
-        "net_income",
-        col("total_revenue") - col("total_expense")
-    ).withColumn(
-        "dw_updated_at",
-        current_timestamp()
+    metrics = (
+        transactions.groupBy("transaction_date_id")
+        .agg(
+            spark_round(spark_sum(col("debit_amount")), 2).alias("total_revenue"),
+            spark_round(spark_sum(col("credit_amount")), 2).alias("total_expense"),
+        )
+        .withColumnRenamed("transaction_date_id", "date_id")
+        .withColumn("net_income", col("total_revenue") - col("total_expense"))
+        .withColumn("dw_updated_at", current_timestamp())
     )
 
-    metrics.write \
-        .mode("append") \
-        .jdbc(db_url, "analytics.financial_daily_metrics", db_properties)
+    metrics.write.mode("append").jdbc(db_url, "analytics.financial_daily_metrics", db_properties)
 
     logger.info("Calculated financial KPIs for %d days", metrics.count())
 
@@ -152,33 +137,25 @@ def calculate_unified_kpis(spark: SparkSession) -> None:
         spark_round(avg("lead_time_days"), 0).alias("order_to_cash_cycle_days")
     )
 
-    metrics = order_cash_cycle.withColumnRenamed(
-        "order_date_id",
-        "date_id"
-    ).withColumn(
-        "revenue_per_supplier",
-        spark_round(spark_sum("revenue").over(), 2)
-    ).withColumn(
-        "profit_per_product",
-        spark_round(spark_sum("profit").over(), 2)
-    ).withColumn(
-        "inventory_to_sales_ratio",
-        0.0
-    ).withColumn(
-        "cash_conversion_cycle_days",
-        col("order_to_cash_cycle_days")
-    ).withColumn(
-        "dw_updated_at",
-        current_timestamp()
-    ).select(
-        "date_id", "revenue_per_supplier", "profit_per_product",
-        "order_to_cash_cycle_days", "inventory_to_sales_ratio",
-        "cash_conversion_cycle_days", "dw_updated_at"
+    metrics = (
+        order_cash_cycle.withColumnRenamed("order_date_id", "date_id")
+        .withColumn("revenue_per_supplier", spark_round(spark_sum("revenue").over(), 2))
+        .withColumn("profit_per_product", spark_round(spark_sum("profit").over(), 2))
+        .withColumn("inventory_to_sales_ratio", 0.0)
+        .withColumn("cash_conversion_cycle_days", col("order_to_cash_cycle_days"))
+        .withColumn("dw_updated_at", current_timestamp())
+        .select(
+            "date_id",
+            "revenue_per_supplier",
+            "profit_per_product",
+            "order_to_cash_cycle_days",
+            "inventory_to_sales_ratio",
+            "cash_conversion_cycle_days",
+            "dw_updated_at",
+        )
     )
 
-    metrics.write \
-        .mode("append") \
-        .jdbc(db_url, "analytics.unified_kpi_metrics", db_properties)
+    metrics.write.mode("append").jdbc(db_url, "analytics.unified_kpi_metrics", db_properties)
 
     logger.info("Calculated unified KPIs for %d days", metrics.count())
 

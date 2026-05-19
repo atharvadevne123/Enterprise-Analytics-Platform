@@ -9,7 +9,6 @@ import pytest
 
 from data.models import AnomalyDetectionConfig, DateRangeFilter, ForecastConfig
 
-
 NOW = datetime(2024, 6, 15, 12, 0, 0)
 LATER = datetime(2024, 7, 15, 12, 0, 0)
 
@@ -59,15 +58,11 @@ class TestAnomalyDetectionConfig:
 
     def test_invalid_lookback_too_low(self):
         with pytest.raises(Exception):
-            AnomalyDetectionConfig(
-                metric_name="x", domain="ecommerce", lookback_days=3
-            )
+            AnomalyDetectionConfig(metric_name="x", domain="ecommerce", lookback_days=3)
 
     def test_invalid_lookback_too_high(self):
         with pytest.raises(Exception):
-            AnomalyDetectionConfig(
-                metric_name="x", domain="ecommerce", lookback_days=400
-            )
+            AnomalyDetectionConfig(metric_name="x", domain="ecommerce", lookback_days=400)
 
     def test_custom_sensitivity(self):
         cfg = AnomalyDetectionConfig(

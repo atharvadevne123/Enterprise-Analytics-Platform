@@ -13,12 +13,11 @@ def _make_client(mock_rows: list | None = None):
         mock_conn = MagicMock()
         if mock_rows is not None:
             mock_conn.execute.return_value.fetchall.return_value = mock_rows
-            mock_conn.execute.return_value.fetchone.return_value = (
-                mock_rows[0] if mock_rows else None
-            )
+            mock_conn.execute.return_value.fetchone.return_value = mock_rows[0] if mock_rows else None
         mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.anomaly_detection import app
+
         client = TestClient(app)
         return client, mock_conn
 
@@ -105,6 +104,7 @@ class TestEdgeCases:
         with patch("services.anomaly_detection.engine") as mock_engine:
             mock_engine.connect.side_effect = Exception("DB unavailable")
             from services.anomaly_detection import app
+
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/anomalies/current")
             assert resp.status_code in (500, 200, 404)
@@ -132,6 +132,7 @@ class TestStatisticalHelpers:
 
     def test_zscore_no_anomaly_for_normal_value(self):
         from services.anomaly_detection import detect_statistical_anomaly
+
         values = [100.0, 102.0, 98.0, 101.0, 99.0, 100.5, 100.0]
         is_anom, z, mean, std = detect_statistical_anomaly(values, 100.0)
         assert not is_anom
@@ -139,35 +140,41 @@ class TestStatisticalHelpers:
 
     def test_zscore_anomaly_for_outlier(self):
         from services.anomaly_detection import detect_statistical_anomaly
+
         values = [100.0] * 10
         is_anom, z, mean, std = detect_statistical_anomaly(values, 200.0, threshold_sigma=1.0)
         assert is_anom or std == 0
 
     def test_zscore_insufficient_data_returns_false(self):
         from services.anomaly_detection import detect_statistical_anomaly
+
         is_anom, z, mean, std = detect_statistical_anomaly([10.0, 20.0], 15.0)
         assert not is_anom
 
     def test_iqr_detects_outlier_below(self):
         from services.anomaly_detection import detect_iqr_anomaly
+
         values = list(range(20, 80))
         is_anom, lower, upper = detect_iqr_anomaly(values, 1.0)
         assert is_anom
 
     def test_iqr_no_anomaly_for_midrange_value(self):
         from services.anomaly_detection import detect_iqr_anomaly
+
         values = list(range(10, 50))
         is_anom, lower, upper = detect_iqr_anomaly(values, 30.0)
         assert not is_anom
 
     def test_iqr_insufficient_data_returns_false(self):
         from services.anomaly_detection import detect_iqr_anomaly
+
         is_anom, lower, upper = detect_iqr_anomaly([1.0, 2.0, 3.0], 2.0)
         assert not is_anom
 
     @pytest.mark.parametrize("threshold", [1.0, 1.5, 2.0, 3.0])
     def test_zscore_threshold_parametrized(self, threshold):
         from services.anomaly_detection import detect_statistical_anomaly
+
         values = [50.0 + i for i in range(10)]
         is_anom, z, mean, std = detect_statistical_anomaly(values, 100.0, threshold)
         assert isinstance(is_anom, bool)

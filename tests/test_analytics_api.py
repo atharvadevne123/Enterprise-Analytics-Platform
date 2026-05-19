@@ -12,18 +12,18 @@ from fastapi.testclient import TestClient
 # Helper
 # ---------------------------------------------------------------------------
 
+
 def _make_client(mock_rows: list | None = None):
     """Return a TestClient with engine.connect() yielding mock rows."""
     with patch("services.analytics_api.engine") as mock_engine:
         mock_conn = MagicMock()
         if mock_rows is not None:
             mock_conn.execute.return_value.fetchall.return_value = mock_rows
-            mock_conn.execute.return_value.fetchone.return_value = (
-                mock_rows[0] if mock_rows else None
-            )
+            mock_conn.execute.return_value.fetchone.return_value = mock_rows[0] if mock_rows else None
         mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.analytics_api import app
+
         client = TestClient(app)
         return client, mock_conn
 
@@ -31,6 +31,7 @@ def _make_client(mock_rows: list | None = None):
 # ---------------------------------------------------------------------------
 # Root / health
 # ---------------------------------------------------------------------------
+
 
 class TestRoot:
     def test_root_returns_200(self):
@@ -57,6 +58,7 @@ class TestRoot:
 # ---------------------------------------------------------------------------
 # E-Commerce metrics
 # ---------------------------------------------------------------------------
+
 
 class TestECommerceMetrics:
     @pytest.fixture(autouse=True)
@@ -96,6 +98,7 @@ class TestECommerceMetrics:
 # Supply chain metrics
 # ---------------------------------------------------------------------------
 
+
 class TestSupplyChainMetrics:
     @pytest.mark.parametrize("days", [7, 30])
     def test_supply_chain_summary_parametrized(self, days):
@@ -114,6 +117,7 @@ class TestSupplyChainMetrics:
 # Financial metrics
 # ---------------------------------------------------------------------------
 
+
 class TestFinancialMetrics:
     @pytest.mark.parametrize("days", [7, 30, 90])
     def test_financial_summary_parametrized(self, days):
@@ -126,6 +130,7 @@ class TestFinancialMetrics:
 # ---------------------------------------------------------------------------
 # KPI metrics
 # ---------------------------------------------------------------------------
+
 
 class TestKPIEndpoints:
     def test_kpi_dashboard_exists(self):
@@ -152,6 +157,7 @@ class TestKPIEndpoints:
 # Edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestEdgeCases:
     def test_negative_days_param(self):
         client, _ = _make_client()
@@ -172,6 +178,7 @@ class TestEdgeCases:
         with patch("services.analytics_api.engine") as mock_engine:
             mock_engine.connect.side_effect = Exception("DB connection failed")
             from services.analytics_api import app
+
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/analytics/ecommerce/summary")
             assert resp.status_code in (500, 200, 404)
@@ -181,13 +188,17 @@ class TestEdgeCases:
 # Existing endpoints (direct URL)
 # ---------------------------------------------------------------------------
 
+
 class TestExistingEndpoints:
-    @pytest.mark.parametrize("endpoint", [
-        "/",
-        "/health",
-        "/version",
-        "/metrics",
-    ])
+    @pytest.mark.parametrize(
+        "endpoint",
+        [
+            "/",
+            "/health",
+            "/version",
+            "/metrics",
+        ],
+    )
     def test_service_endpoints_return_json(self, endpoint):
         client, _ = _make_client()
         resp = client.get(endpoint)
@@ -206,31 +217,40 @@ class TestExistingEndpoints:
             data = resp.json()
             assert "version" in data
 
-    @pytest.mark.parametrize("start,end", [
-        ("2024-01-01", "2024-01-31"),
-        ("2024-06-01", "2024-06-30"),
-        ("2023-01-01", "2023-12-31"),
-    ])
+    @pytest.mark.parametrize(
+        "start,end",
+        [
+            ("2024-01-01", "2024-01-31"),
+            ("2024-06-01", "2024-06-30"),
+            ("2023-01-01", "2023-12-31"),
+        ],
+    )
     def test_ecommerce_metrics_date_ranges(self, start, end):
         client, mock_conn = _make_client([])
         mock_conn.execute.return_value = []
         resp = client.get(f"/ecommerce/metrics/{start}/{end}")
         assert resp.status_code in (200, 404, 422, 500)
 
-    @pytest.mark.parametrize("start,end", [
-        ("2024-01-01", "2024-01-31"),
-        ("2024-03-01", "2024-03-31"),
-    ])
+    @pytest.mark.parametrize(
+        "start,end",
+        [
+            ("2024-01-01", "2024-01-31"),
+            ("2024-03-01", "2024-03-31"),
+        ],
+    )
     def test_supply_chain_metrics_date_ranges(self, start, end):
         client, mock_conn = _make_client([])
         mock_conn.execute.return_value = []
         resp = client.get(f"/supply-chain/metrics/{start}/{end}")
         assert resp.status_code in (200, 404, 422, 500)
 
-    @pytest.mark.parametrize("start,end", [
-        ("2024-01-01", "2024-01-31"),
-        ("2024-12-01", "2024-12-31"),
-    ])
+    @pytest.mark.parametrize(
+        "start,end",
+        [
+            ("2024-01-01", "2024-01-31"),
+            ("2024-12-01", "2024-12-31"),
+        ],
+    )
     def test_financial_metrics_date_ranges(self, start, end):
         client, mock_conn = _make_client([])
         mock_conn.execute.return_value = []
@@ -262,6 +282,7 @@ class TestExistingEndpoints:
 # Readiness probe
 # ---------------------------------------------------------------------------
 
+
 class TestReadinessProbe:
     def test_readyz_endpoint_exists(self):
         with patch("services.analytics_api.engine") as mock_engine:
@@ -269,6 +290,7 @@ class TestReadinessProbe:
             mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
             mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
             from services.analytics_api import app
+
             client = TestClient(app)
             resp = client.get("/readyz")
             assert resp.status_code in (200, 503)
@@ -279,6 +301,7 @@ class TestReadinessProbe:
             mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
             mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
             from services.analytics_api import app
+
             client = TestClient(app)
             resp = client.get("/readyz")
             if resp.status_code == 200:
@@ -288,6 +311,7 @@ class TestReadinessProbe:
         with patch("services.analytics_api.engine") as mock_engine:
             mock_engine.connect.side_effect = Exception("DB down")
             from services.analytics_api import app
+
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/readyz")
             assert resp.status_code in (503, 500)
@@ -296,6 +320,7 @@ class TestReadinessProbe:
 # ---------------------------------------------------------------------------
 # Budget vs actual
 # ---------------------------------------------------------------------------
+
 
 class TestBudgetVsActual:
     @pytest.mark.parametrize("gl_account_id", ["GL001", "GL002", "EXP-100"])
@@ -308,10 +333,7 @@ class TestBudgetVsActual:
     def test_budget_vs_actual_with_date_range(self):
         client, mock_conn = _make_client([])
         mock_conn.execute.return_value = []
-        resp = client.get(
-            "/financial/budget-vs-actual/GL001"
-            "?start_date=2024-01-01&end_date=2024-03-31"
-        )
+        resp = client.get("/financial/budget-vs-actual/GL001?start_date=2024-01-01&end_date=2024-03-31")
         assert resp.status_code in (200, 404, 422, 500)
 
 
@@ -319,11 +341,15 @@ class TestBudgetVsActual:
 # Unified KPIs
 # ---------------------------------------------------------------------------
 
+
 class TestUnifiedKPIs:
-    @pytest.mark.parametrize("start,end", [
-        ("2024-01-01", "2024-03-31"),
-        ("2024-07-01", "2024-09-30"),
-    ])
+    @pytest.mark.parametrize(
+        "start,end",
+        [
+            ("2024-01-01", "2024-03-31"),
+            ("2024-07-01", "2024-09-30"),
+        ],
+    )
     def test_unified_kpis_date_ranges(self, start, end):
         client, mock_conn = _make_client([])
         mock_conn.execute.return_value = []

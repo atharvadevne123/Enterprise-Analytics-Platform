@@ -15,10 +15,9 @@ import argparse
 import os
 import re
 import sys
-from typing import List, Tuple
 
 
-def parse_env_example(path: str = ".env.example") -> List[str]:
+def parse_env_example(path: str = ".env.example") -> list[str]:
     """Extract variable names from an .env.example file.
 
     Args:
@@ -27,7 +26,7 @@ def parse_env_example(path: str = ".env.example") -> List[str]:
     Returns:
         List of variable names that have values set (non-empty) in the example.
     """
-    variables: List[str] = []
+    variables: list[str] = []
     try:
         with open(path) as f:
             for line in f:
@@ -42,7 +41,7 @@ def parse_env_example(path: str = ".env.example") -> List[str]:
     return variables
 
 
-def check_env_vars(variables: List[str]) -> List[Tuple[str, bool]]:
+def check_env_vars(variables: list[str]) -> list[tuple[str, bool]]:
     """Check which variables are set in the current environment.
 
     Args:

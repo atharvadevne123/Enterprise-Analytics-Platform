@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -18,15 +17,19 @@ def _make_client(mock_rows=None, fetchone_val=None):
         mock_engine.connect.return_value.__enter__ = lambda s: mock_conn
         mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.analytics_api import app
+
         return TestClient(app), mock_conn
 
 
 class TestTopProductsEndpoint:
-    @pytest.mark.parametrize("days,limit", [
-        (7, 5),
-        (30, 10),
-        (90, 20),
-    ])
+    @pytest.mark.parametrize(
+        "days,limit",
+        [
+            (7, 5),
+            (30, 10),
+            (90, 20),
+        ],
+    )
     def test_top_products_day_and_limit_params(self, days, limit):
         client, mock_conn = _make_client(mock_rows=[])
         resp = client.get(f"/ecommerce/top-products?days={days}&limit={limit}")
@@ -47,6 +50,7 @@ class TestTopProductsEndpoint:
         with patch("services.analytics_api.engine") as mock_engine:
             mock_engine.connect.side_effect = Exception("DB error")
             from services.analytics_api import app
+
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/ecommerce/top-products")
             assert resp.status_code in (500, 200)
