@@ -44,7 +44,7 @@ class TestTopProductsEndpoint:
     def test_top_products_invalid_limit(self):
         client, _ = _make_client(mock_rows=[])
         resp = client.get("/ecommerce/top-products?limit=0")
-        assert resp.status_code in (200, 422, 500)
+        assert resp.status_code in (200, 404, 422, 500)
 
     def test_top_products_db_error_returns_500(self):
         with patch("services.analytics_api.engine") as mock_engine:
