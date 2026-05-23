@@ -4,7 +4,7 @@
 # Core Data Processing
 pandas>=2.0,<3
 numpy>=1.26,<3
-pyarrow>=14,<20
+pyarrow>=21.0.0,<22
 
 # Database
 psycopg2-binary>=2.9,<3
