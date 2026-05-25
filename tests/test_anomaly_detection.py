@@ -155,7 +155,8 @@ class TestStatisticalHelpers:
         from services.anomaly_detection import detect_iqr_anomaly
 
         values = list(range(20, 80))
-        is_anom, lower, upper = detect_iqr_anomaly(values, 1.0)
+        # lower fence = Q1 - 1.5*IQR ≈ -9.5; use -50 to be clearly below
+        is_anom, lower, upper = detect_iqr_anomaly(values, -50.0)
         assert is_anom
 
     def test_iqr_no_anomaly_for_midrange_value(self):
