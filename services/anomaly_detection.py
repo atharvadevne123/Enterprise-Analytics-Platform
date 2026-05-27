@@ -547,7 +547,7 @@ def get_active_alerts(
 def acknowledge_alert(alert_id: str) -> dict[str, str]:
     """Acknowledge an alert"""
     try:
-        return {"alert_id": alert_id, "status": "acknowledged", "timestamp": datetime.now()}
+        return {"alert_id": alert_id, "status": "acknowledged", "timestamp": datetime.now().isoformat()}
 
     except Exception as e:
         logger.error(f"Error acknowledging alert: {e}")
