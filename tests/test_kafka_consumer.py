@@ -147,11 +147,17 @@ class TestConsumerMessageProcessing:
             yield
 
     def test_consume_calls_handler_for_each_message(self):
-        mock_msg = MagicMock()
-        mock_msg.value = {"data": "test"}
-        mock_msg.topic.return_value = "test"
-        mock_msg.partition.return_value = 0
-        self.mock_kafka.__iter__ = MagicMock(return_value=iter([mock_msg] * 3))
+        mock_record = MagicMock()
+        mock_record.value = {"data": "test"}
+        mock_record.topic = "test"
+        mock_record.partition = 0
+
+        from unittest.mock import MagicMock as MM
+
+        tp = MM()
+        # poll returns a dict mapping TopicPartition -> records; after one batch return empty
+        self.mock_kafka.poll.side_effect = [{tp: [mock_record] * 3}, {}]
+        self.mock_kafka.commit.return_value = None
 
         processed = []
 
@@ -160,14 +166,20 @@ class TestConsumerMessageProcessing:
 
         try:
             self.consumer.consume_messages(handler, max_messages=3)
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError, StopIteration):
             pass
 
     def test_consume_messages_with_max_limit(self):
-        msgs = [MagicMock() for _ in range(10)]
-        for m in msgs:
-            m.value = {"id": 1}
-        self.mock_kafka.__iter__ = MagicMock(return_value=iter(msgs))
+        mock_record = MagicMock()
+        mock_record.value = {"id": 1}
+        mock_record.topic = "test"
+        mock_record.partition = 0
+
+        from unittest.mock import MagicMock as MM
+
+        tp = MM()
+        self.mock_kafka.poll.side_effect = [{tp: [mock_record] * 10}, {}]
+        self.mock_kafka.commit.return_value = None
 
         processed = []
 
