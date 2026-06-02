@@ -96,3 +96,45 @@ class TestDateRangeFilter:
     def test_negative_offset_raises(self):
         with pytest.raises(Exception):
             DateRangeFilter(start_date=NOW, end_date=LATER, offset=-1)
+
+
+# ---------------------------------------------------------------------------
+# Additional request model tests
+# ---------------------------------------------------------------------------
+
+
+class TestDateRangeRequestModel:
+    def test_date_range_request_valid(self):
+        from services.analytics_api import DateRangeRequest
+        from datetime import date
+
+        req = DateRangeRequest(start_date=date(2024, 1, 1), end_date=date(2024, 12, 31))
+        assert req.start_date < req.end_date
+
+    def test_date_range_request_same_day(self):
+        from services.analytics_api import DateRangeRequest
+        from datetime import date
+
+        req = DateRangeRequest(start_date=date(2024, 6, 15), end_date=date(2024, 6, 15))
+        assert req.start_date == req.end_date
+
+    def test_date_range_request_end_before_start_raises(self):
+        from services.analytics_api import DateRangeRequest
+        from datetime import date
+
+        with pytest.raises(Exception):
+            DateRangeRequest(start_date=date(2024, 12, 31), end_date=date(2024, 1, 1))
+
+    @pytest.mark.parametrize("start,end", [
+        ("2024-01-01", "2024-03-31"),
+        ("2023-06-01", "2023-09-30"),
+        ("2024-12-01", "2024-12-31"),
+    ])
+    def test_date_range_various_valid_ranges(self, start, end):
+        from services.analytics_api import DateRangeRequest
+        from datetime import date
+
+        s = date.fromisoformat(start)
+        e = date.fromisoformat(end)
+        req = DateRangeRequest(start_date=s, end_date=e)
+        assert req.end_date >= req.start_date
