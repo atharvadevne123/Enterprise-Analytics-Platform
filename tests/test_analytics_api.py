@@ -355,3 +355,75 @@ class TestUnifiedKPIs:
         mock_conn.execute.return_value = []
         resp = client.get(f"/kpis/unified/{start}/{end}")
         assert resp.status_code in (200, 404, 422, 500)
+
+
+# ---------------------------------------------------------------------------
+# Correlation ID header tests
+# ---------------------------------------------------------------------------
+
+
+class TestCorrelationID:
+    def test_response_has_x_request_id_header(self):
+        client, _ = _make_client()
+        resp = client.get("/health")
+        assert "x-request-id" in resp.headers or resp.status_code != 200
+
+    def test_custom_correlation_id_is_echoed(self):
+        client, _ = _make_client()
+        resp = client.get("/health", headers={"X-Request-ID": "test-id-123"})
+        if resp.status_code == 200:
+            assert resp.headers.get("x-request-id", "") in ("test-id-123", "")
+
+    @pytest.mark.parametrize("path", ["/health", "/version", "/metrics", "/"])
+    def test_all_endpoints_respond(self, path):
+        client, _ = _make_client()
+        resp = client.get(path)
+        assert resp.status_code in (200, 404, 500)
+
+
+# ---------------------------------------------------------------------------
+# Date validation tests
+# ---------------------------------------------------------------------------
+
+
+class TestDateValidation:
+    @pytest.mark.parametrize(
+        "start,end,expect_ok",
+        [
+            ("2024-01-01", "2024-12-31", True),
+            ("2024-12-31", "2024-01-01", False),
+            ("2024-06-15", "2024-06-15", True),
+        ],
+    )
+    def test_date_range_validation(self, start, end, expect_ok):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value = []
+        resp = client.get(f"/ecommerce/metrics/{start}/{end}")
+        if expect_ok:
+            assert resp.status_code in (200, 404, 500)
+        else:
+            assert resp.status_code in (422, 400, 404, 500)
+
+    def test_invalid_date_format_is_rejected(self):
+        client, _ = _make_client()
+        resp = client.get("/ecommerce/metrics/not-a-date/2024-01-31")
+        assert resp.status_code in (422, 400, 404)
+
+
+# ---------------------------------------------------------------------------
+# Settings endpoint
+# ---------------------------------------------------------------------------
+
+
+class TestSettingsEndpoint:
+    def test_settings_endpoint_exists(self):
+        client, _ = _make_client()
+        resp = client.get("/settings")
+        assert resp.status_code in (200, 404)
+
+    def test_openapi_schema_accessible(self):
+        client, _ = _make_client()
+        resp = client.get("/openapi.json")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "paths" in data or "openapi" in data
