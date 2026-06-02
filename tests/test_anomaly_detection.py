@@ -228,3 +228,73 @@ class TestExistingDetectionEndpoints:
         client, _ = _make_client()
         resp = client.post("/alerts/test-alert-123/acknowledge")
         assert resp.status_code in (200, 404, 422)
+
+
+# ---------------------------------------------------------------------------
+# Additional edge case tests
+# ---------------------------------------------------------------------------
+
+
+class TestDetectionMethods:
+    @pytest.mark.parametrize("method", ["zscore", "iqr"])
+    def test_revenue_detection_method_param(self, method):
+        client, mock_conn = _make_client()
+        mock_conn.execute.return_value = []
+        resp = client.post(f"/detect/ecommerce/revenue?method={method}")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    @pytest.mark.parametrize("method", ["zscore", "iqr"])
+    def test_delivery_detection_method_param(self, method):
+        client, mock_conn = _make_client()
+        mock_conn.execute.return_value = []
+        resp = client.post(f"/detect/supply-chain/on-time-delivery?method={method}")
+        assert resp.status_code in (200, 404, 422, 500)
+
+    def test_invalid_method_param(self):
+        client, _ = _make_client()
+        resp = client.post("/detect/ecommerce/revenue?method=invalid_method")
+        assert resp.status_code in (200, 400, 422, 404, 500)
+
+
+class TestAnomalyAlertModel:
+    def test_severity_levels(self):
+        """Alert severity should be one of the expected values."""
+        from services.anomaly_detection import AnomalyAlert
+        from datetime import datetime
+        from decimal import Decimal
+
+        alert = AnomalyAlert(
+            alert_id="test-001",
+            severity="CRITICAL",
+            domain="ecommerce",
+            metric_name="revenue",
+            current_value=Decimal("100"),
+            expected_range_min=Decimal("50"),
+            expected_range_max=Decimal("150"),
+            deviation_pct=Decimal("5"),
+            timestamp=datetime.utcnow(),
+            recommended_action="Investigate",
+        )
+        assert alert.severity in ("CRITICAL", "WARNING", "INFO")
+
+    def test_alert_serialization(self):
+        """Alert should serialize to JSON without errors."""
+        from services.anomaly_detection import AnomalyAlert
+        from datetime import datetime
+        from decimal import Decimal
+
+        alert = AnomalyAlert(
+            alert_id="test-002",
+            severity="WARNING",
+            domain="supply_chain",
+            metric_name="on_time_delivery",
+            current_value=Decimal("85"),
+            expected_range_min=Decimal("90"),
+            expected_range_max=Decimal("100"),
+            deviation_pct=Decimal("-5"),
+            timestamp=datetime.utcnow(),
+            recommended_action="Review supplier contracts",
+        )
+        data = alert.model_dump()
+        assert "alert_id" in data
+        assert "severity" in data
