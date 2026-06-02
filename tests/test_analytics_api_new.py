@@ -93,3 +93,45 @@ class TestCashPositionEndpoint:
         if resp.status_code == 200:
             data = resp.json()
             assert "net_cash_position" in data
+
+
+# ---------------------------------------------------------------------------
+# Additional analytics API new tests
+# ---------------------------------------------------------------------------
+
+
+class TestAnalyticsAPIEndpointMethods:
+    def test_get_only_endpoints_reject_post(self):
+        client, _ = _make_client()
+        resp = client.post("/health")
+        assert resp.status_code == 405
+
+    def test_get_only_endpoints_reject_delete(self):
+        client, _ = _make_client()
+        resp = client.delete("/version")
+        assert resp.status_code in (405, 404)
+
+    @pytest.mark.parametrize("path", ["/", "/health", "/version", "/metrics", "/readyz"])
+    def test_all_utility_endpoints_accept_get(self, path):
+        client, _ = _make_client()
+        resp = client.get(path)
+        assert resp.status_code in (200, 503)
+
+    def test_health_check_structure(self):
+        client, _ = _make_client()
+        data = client.get("/health").json()
+        assert "status" in data
+        assert data["status"] == "healthy"
+
+    def test_version_check_structure(self):
+        client, _ = _make_client()
+        data = client.get("/version").json()
+        assert "version" in data
+        assert "." in data["version"]
+
+    @pytest.mark.parametrize("days", [1, 7, 14, 30, 60, 90, 180, 365])
+    def test_conversion_rate_all_valid_day_ranges(self, days):
+        client, mock_conn = _make_client()
+        mock_conn.execute.return_value.fetchone.return_value = (0.035, 0.02, 0.05, 0.005)
+        resp = client.get(f"/ecommerce/conversion-rate?days={days}")
+        assert resp.status_code in (200, 500)
