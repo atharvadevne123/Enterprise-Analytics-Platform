@@ -200,7 +200,7 @@ def detect_iqr_anomaly(
 
 @app.post("/detect/ecommerce/revenue")
 def detect_revenue_anomaly(current_date: date | None = None) -> dict[str, Any]:
-    """Detect anomaly in e-commerce revenue"""
+    """Detect anomaly in daily e-commerce revenue using Z-score and IQR methods."""
     if not current_date:
         current_date = datetime.now().date()
 
@@ -274,7 +274,7 @@ def detect_revenue_anomaly(current_date: date | None = None) -> dict[str, Any]:
 
 @app.post("/detect/ecommerce/conversion-rate")
 def detect_conversion_anomaly(current_date: date | None = None) -> dict[str, Any]:
-    """Detect anomaly in conversion rate"""
+    """Detect anomaly in e-commerce conversion rate using statistical methods."""
     if not current_date:
         current_date = datetime.now().date()
 
@@ -339,7 +339,7 @@ def detect_conversion_anomaly(current_date: date | None = None) -> dict[str, Any
 
 @app.post("/detect/supply-chain/on-time-delivery")
 def detect_delivery_anomaly(current_date: date | None = None) -> dict[str, Any]:
-    """Detect anomaly in on-time delivery percentage"""
+    """Detect anomaly in supply-chain on-time delivery percentage."""
     if not current_date:
         current_date = datetime.now().date()
 
