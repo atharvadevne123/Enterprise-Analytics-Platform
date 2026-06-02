@@ -66,6 +66,30 @@ class Settings:
         ]
 
     @classmethod
+    def validate(cls) -> list[str]:
+        """Return a list of configuration validation errors (empty if valid).
+
+        Checks that numeric thresholds are positive and ports are in valid range.
+        """
+        errors: list[str] = []
+        if cls.zscore_threshold <= 0:
+            errors.append(f"ZSCORE_THRESHOLD must be positive, got {cls.zscore_threshold}")
+        if cls.iqr_multiplier <= 0:
+            errors.append(f"IQR_MULTIPLIER must be positive, got {cls.iqr_multiplier}")
+        if cls.max_history_days < 1:
+            errors.append(f"MAX_HISTORY_DAYS must be >= 1, got {cls.max_history_days}")
+        if cls.min_anomaly_data_points < 1:
+            errors.append(f"MIN_ANOMALY_DATA_POINTS must be >= 1, got {cls.min_anomaly_data_points}")
+        for name, port in [
+            ("ANALYTICS_API_PORT", cls.analytics_api_port),
+            ("ANOMALY_DETECTION_PORT", cls.anomaly_detection_port),
+            ("FORECASTING_SERVICE_PORT", cls.forecasting_service_port),
+        ]:
+            if not (1 <= port <= 65535):
+                errors.append(f"{name} must be 1-65535, got {port}")
+        return errors
+
+    @classmethod
     def as_dict(cls) -> dict[str, object]:
         """Return a sanitized dict of all settings (no secrets)."""
         return {
