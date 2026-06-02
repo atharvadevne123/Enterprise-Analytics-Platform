@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from typing import Any
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, current_timestamp
@@ -39,7 +40,7 @@ db_url = os.getenv(
 )
 
 
-def _to_date_id(col_name: str):
+def _to_date_id(col_name: str) -> Any:
     """Return a Spark column expression converting a date column to YYYYMMDD int."""
     return spark_round(col(col_name).cast("date").cast("string").regexp_replace("-", "").cast("int"))
 

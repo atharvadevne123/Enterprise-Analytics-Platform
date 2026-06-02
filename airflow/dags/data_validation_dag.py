@@ -135,8 +135,8 @@ def validate_transactions_table() -> None:
         raise ValueError(f"Transaction validation failed: Zero-amounts={zero_amounts}")
 
 
-def record_validation_status(status: str, details: str):
-    """Record validation status in database"""
+def record_validation_status(status: str, details: str) -> None:
+    """Record validation status in database."""
     from datetime import datetime
 
     from sqlalchemy import create_engine, text
