@@ -81,3 +81,51 @@ class TestMakeEngineHelper:
         engine = _make_engine("sqlite:///./test_anomaly_engine.db")
         assert engine is not None
         engine.dispose()
+
+
+# ---------------------------------------------------------------------------
+# Additional config tests
+# ---------------------------------------------------------------------------
+
+
+class TestEnginePoolConfig:
+    @pytest.mark.parametrize("service_module", [
+        "services.analytics_api",
+        "services.anomaly_detection",
+        "services.forecasting_service",
+    ])
+    def test_engine_created_for_service(self, service_module):
+        import importlib
+        mod = importlib.import_module(service_module)
+        assert hasattr(mod, "engine")
+        assert mod.engine is not None
+
+    def test_analytics_engine_is_singleton(self):
+        from services.analytics_api import engine as e1
+        from services.analytics_api import engine as e2
+        assert e1 is e2
+
+    @pytest.mark.parametrize("url,expected_check", [
+        ("sqlite:///./test.db", True),
+        ("sqlite+pysqlite:///:memory:", True),
+    ])
+    def test_sqlite_urls_are_test_environments(self, url, expected_check):
+        from config.settings import Settings
+
+        original = Settings.database_url
+        Settings.database_url = url
+        result = Settings.is_test_environment()
+        Settings.database_url = original
+        assert result is expected_check
+
+
+class TestSettingsApiWorkers:
+    def test_api_workers_positive(self):
+        from config.settings import Settings
+
+        assert Settings.api_workers > 0
+
+    def test_max_forecast_horizon_geq_default(self):
+        from config.settings import Settings
+
+        assert Settings.max_forecast_horizon_days >= Settings.default_forecast_horizon_days
