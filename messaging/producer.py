@@ -51,8 +51,8 @@ class UnifiedProducer:
         )
         logger.info(f"Kafka producer initialized with brokers: {broker_urls}")
 
-    def send_order_event(self, order_data: dict[str, Any], callback=None) -> bool:
-        """Send order event to ecommerce.orders topic"""
+    def send_order_event(self, order_data: dict[str, Any], callback: Any = None) -> bool:
+        """Send order event to ecommerce.orders topic."""
         try:
             future = self.producer.send(
                 "ecommerce.orders", value=order_data, key=str(order_data.get("order_id")).encode("utf-8")
@@ -68,8 +68,8 @@ class UnifiedProducer:
             logger.error(f"Failed to send order event: {e}")
             return False
 
-    def send_inventory_event(self, inventory_data: dict[str, Any], callback=None) -> bool:
-        """Send inventory event to ecommerce.inventory topic"""
+    def send_inventory_event(self, inventory_data: dict[str, Any], callback: Any = None) -> bool:
+        """Send inventory event to ecommerce.inventory topic."""
         try:
             future = self.producer.send(
                 "ecommerce.inventory", value=inventory_data, key=str(inventory_data.get("product_id")).encode("utf-8")
@@ -85,7 +85,7 @@ class UnifiedProducer:
             logger.error(f"Failed to send inventory event: {e}")
             return False
 
-    def send_customer_event(self, customer_data: dict[str, Any], callback=None) -> bool:
+    def send_customer_event(self, customer_data: dict[str, Any], callback: Any = None) -> bool:
         """Send customer event to ecommerce.customers topic"""
         try:
             future = self.producer.send(
@@ -102,7 +102,7 @@ class UnifiedProducer:
             logger.error(f"Failed to send customer event: {e}")
             return False
 
-    def send_delivery_event(self, delivery_data: dict[str, Any], callback=None) -> bool:
+    def send_delivery_event(self, delivery_data: dict[str, Any], callback: Any = None) -> bool:
         """Send delivery event to supply_chain.deliveries topic"""
         try:
             future = self.producer.send(
@@ -121,7 +121,7 @@ class UnifiedProducer:
             logger.error(f"Failed to send delivery event: {e}")
             return False
 
-    def send_purchase_order_event(self, po_data: dict[str, Any], callback=None) -> bool:
+    def send_purchase_order_event(self, po_data: dict[str, Any], callback: Any = None) -> bool:
         """Send purchase order event to supply_chain.purchase_orders topic"""
         try:
             future = self.producer.send(
@@ -138,7 +138,7 @@ class UnifiedProducer:
             logger.error(f"Failed to send purchase order event: {e}")
             return False
 
-    def send_supplier_event(self, supplier_data: dict[str, Any], callback=None) -> bool:
+    def send_supplier_event(self, supplier_data: dict[str, Any], callback: Any = None) -> bool:
         """Send supplier event to supply_chain.suppliers topic"""
         try:
             future = self.producer.send(
@@ -155,7 +155,7 @@ class UnifiedProducer:
             logger.error(f"Failed to send supplier event: {e}")
             return False
 
-    def send_transaction_event(self, transaction_data: dict[str, Any], callback=None) -> bool:
+    def send_transaction_event(self, transaction_data: dict[str, Any], callback: Any = None) -> bool:
         """Send transaction event to financials.transactions topic"""
         try:
             future = self.producer.send(
@@ -174,7 +174,7 @@ class UnifiedProducer:
             logger.error(f"Failed to send transaction event: {e}")
             return False
 
-    def send_budget_event(self, budget_data: dict[str, Any], callback=None) -> bool:
+    def send_budget_event(self, budget_data: dict[str, Any], callback: Any = None) -> bool:
         """Send budget event to financials.budgets topic"""
         try:
             future = self.producer.send(
@@ -191,7 +191,7 @@ class UnifiedProducer:
             logger.error(f"Failed to send budget event: {e}")
             return False
 
-    def send_actual_event(self, actual_data: dict[str, Any], callback=None) -> bool:
+    def send_actual_event(self, actual_data: dict[str, Any], callback: Any = None) -> bool:
         """Send actual event to financials.actuals topic"""
         try:
             future = self.producer.send(
