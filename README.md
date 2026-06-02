@@ -399,10 +399,23 @@ Key variables:
 | `KAFKA_BROKERS` | `localhost:9092` | Comma-separated Kafka brokers |
 | `ZSCORE_THRESHOLD` | `2.0` | Sigma threshold for anomaly detection |
 | `IQR_MULTIPLIER` | `1.5` | IQR fence multiplier |
+| `MAX_HISTORY_DAYS` | `90` | Lookback window for anomaly baseline |
+| `MIN_ANOMALY_DATA_POINTS` | `10` | Minimum data points before anomaly scoring |
+| `DEFAULT_FORECAST_HORIZON` | `30` | Default forecast horizon in days |
+| `MAX_FORECAST_HORIZON` | `365` | Maximum allowed forecast horizon in days |
 | `LOG_LEVEL` | `INFO` | Python logging level |
 | `API_WORKERS` | `4` | Uvicorn worker count |
 
 Validate your environment:
 ```bash
 make validate-env
+```
+
+Programmatic validation:
+```python
+from config.settings import Settings
+errors = Settings.validate()
+if errors:
+    for e in errors:
+        print(f"[CONFIG ERROR] {e}")
 ```
