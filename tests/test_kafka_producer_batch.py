@@ -102,3 +102,61 @@ class TestSendBatchMethod:
         events = [_make_order(i) for i in range(batch_size)]
         count = p.send_batch("ecommerce.orders", events)
         assert count == batch_size
+
+
+# ---------------------------------------------------------------------------
+# Additional batch producer tests
+# ---------------------------------------------------------------------------
+
+
+class TestBatchSendEdgeCases:
+    @pytest.fixture()
+    def mock_producer_instance(self):
+        with patch("messaging.producer.KafkaProducer") as mock_kp:
+            mock_inst = MagicMock()
+            mock_kp.return_value = mock_inst
+            yield mock_inst
+
+    def test_send_events_to_multiple_topics(self, mock_producer_instance):
+        from messaging.producer import UnifiedProducer
+
+        p = UnifiedProducer.__new__(UnifiedProducer)
+        p.broker_urls = ["localhost:9092"]
+        p.producer = mock_producer_instance
+
+        results = [
+            p.send_order_event({"order_id": 1}),
+            p.send_delivery_event({"delivery_id": 2}),
+            p.send_transaction_event({"transaction_id": 3}),
+        ]
+        assert all(r is True for r in results)
+        assert mock_producer_instance.send.call_count == 3
+
+    @pytest.mark.parametrize("batch_size", [1, 5, 10, 50])
+    def test_large_batch_sends_all(self, mock_producer_instance, batch_size):
+        from messaging.producer import UnifiedProducer
+
+        p = UnifiedProducer.__new__(UnifiedProducer)
+        p.broker_urls = ["localhost:9092"]
+        p.producer = mock_producer_instance
+
+        for i in range(batch_size):
+            p.send_order_event({"order_id": i})
+        assert mock_producer_instance.send.call_count == batch_size
+
+    def test_exception_in_one_does_not_affect_others(self, mock_producer_instance):
+        from messaging.producer import UnifiedProducer
+
+        p = UnifiedProducer.__new__(UnifiedProducer)
+        p.broker_urls = ["localhost:9092"]
+        p.producer = mock_producer_instance
+
+        mock_producer_instance.send.side_effect = [Exception("fail"), None, None]
+        results = [
+            p.send_order_event({"order_id": 1}),
+            p.send_inventory_event({"product_id": 2}),
+            p.send_customer_event({"customer_id": 3}),
+        ]
+        assert results[0] is False
+        assert results[1] is True
+        assert results[2] is True
