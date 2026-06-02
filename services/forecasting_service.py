@@ -39,7 +39,7 @@ app = FastAPI(
 
 
 @app.middleware("http")
-async def add_correlation_id(request: Request, call_next):
+async def add_correlation_id(request: Request, call_next: Any) -> Any:
     """Attach a unique X-Request-ID header to every response for tracing."""
     correlation_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
     logger.info("Request %s %s [id=%s]", request.method, request.url.path, correlation_id)
@@ -52,7 +52,7 @@ async def add_correlation_id(request: Request, call_next):
 DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/analytics_warehouse")
 
 
-def _make_engine(url: str):
+def _make_engine(url: str) -> Any:
     """Create a SQLAlchemy engine appropriate for the dialect."""
     if url.startswith("sqlite"):
         return create_engine(url, connect_args={"check_same_thread": False})
@@ -64,6 +64,8 @@ engine = _make_engine(DB_URL)
 
 # Response models
 class DemandForecast(BaseModel):
+    """ML demand forecast for a specific product over a given horizon."""
+
     product_id: int
     forecast_date: date
     forecast_horizon_days: int
@@ -79,6 +81,8 @@ class DemandForecast(BaseModel):
 
 
 class LeadTimeForecast(BaseModel):
+    """Predicted lead time from a supplier for upcoming purchase orders."""
+
     supplier_id: int
     forecast_date: date
     forecasted_lead_time_days: int
@@ -91,6 +95,8 @@ class LeadTimeForecast(BaseModel):
 
 
 class CashFlowForecast(BaseModel):
+    """Net cash-flow projection combining inflows and outflows over the horizon."""
+
     forecast_date: date
     forecast_horizon_days: int
     forecasted_cash_inflow: Decimal
