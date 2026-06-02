@@ -97,6 +97,31 @@ Scope examples: `analytics-api`, `anomaly`, `forecasting`, `kafka`, `spark`, `ai
 4. Update the `endpoints` list in the service `root()` function.
 5. Update `CHANGELOG.md`.
 
+## Configuration Validation
+
+Run `Settings.validate()` after any change to environment variables:
+
+```python
+from config.settings import Settings
+errors = Settings.validate()
+if errors:
+    for e in errors:
+        print(f"[CONFIG ERROR] {e}")
+```
+
+Or via the CLI helper:
+
+```bash
+make validate-env
+```
+
+## Adding a New Setting
+
+1. Add the class attribute to `config/settings.py` with a sensible default.
+2. Document the variable in `.env.example` with a comment.
+3. Add the variable to the `README.md` Environment Variables table.
+4. Write tests in `tests/test_settings_extended.py` covering the default and override.
+
 ## Reporting Issues
 
 Open an issue with a clear title, steps to reproduce, and expected vs. actual behavior.
