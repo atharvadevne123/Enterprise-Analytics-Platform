@@ -13,9 +13,12 @@ from __future__ import annotations
 
 import argparse
 import csv
+import logging
 import random
 from datetime import date, timedelta
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def _dates(n: int, end: date | None = None) -> list[str]:
@@ -161,10 +164,11 @@ def main() -> int:
     ]
 
     for p in files:
-        print(f"  wrote {p} ({args.rows} rows)")
+        logger.info("wrote %s (%d rows)", p, args.rows)
 
     return 0
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     raise SystemExit(main())

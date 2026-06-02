@@ -12,9 +12,12 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import re
 import sys
+
+logger = logging.getLogger(__name__)
 
 
 def parse_env_example(path: str = ".env.example") -> list[str]:
@@ -37,7 +40,7 @@ def parse_env_example(path: str = ".env.example") -> list[str]:
                 if match:
                     variables.append(match.group(1))
     except FileNotFoundError:
-        print(f"Warning: {path} not found — skipping validation.")
+        logger.warning("Warning: %s not found — skipping validation.", path)
     return variables
 
 
@@ -61,19 +64,19 @@ def main() -> int:
 
     variables = parse_env_example(args.env_file)
     if not variables:
-        print("No variables to check.")
+        logger.info("No variables to check.")
         return 0
 
     results = check_env_vars(variables)
     missing = [var for var, is_set in results if not is_set]
     present = [var for var, is_set in results if is_set]
 
-    print(f"Checked {len(variables)} variables: {len(present)} set, {len(missing)} missing")
+    logger.info("Checked %d variables: %d set, %d missing", len(variables), len(present), len(missing))
 
     if missing:
-        print("\nMissing variables:")
+        logger.warning("Missing variables:")
         for var in missing:
-            print(f"  - {var}")
+            logger.warning("  - %s", var)
         if not args.warn_only:
             return 1
 
@@ -81,4 +84,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     sys.exit(main())

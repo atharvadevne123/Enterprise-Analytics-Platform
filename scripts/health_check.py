@@ -11,8 +11,11 @@ Exits with 0 if all services are healthy, 1 otherwise.
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 import urllib.request
+
+logger = logging.getLogger(__name__)
 
 SERVICES: dict[str, int] = {
     "analytics-api": 8000,
@@ -63,17 +66,18 @@ def main() -> int:
     all_healthy = True
     for name, healthy, message in results:
         status = "HEALTHY" if healthy else "UNHEALTHY"
-        print(f"  {status:<10} {name:<30} {message}")
+        logger.info("  %-10s %-30s %s", status, name, message)
         if not healthy:
             all_healthy = False
 
     if all_healthy:
-        print("\nAll services healthy.")
+        logger.info("All services healthy.")
         return 0
     else:
-        print("\nOne or more services are unhealthy.")
+        logger.warning("One or more services are unhealthy.")
         return 1
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     sys.exit(main())
