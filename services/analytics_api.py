@@ -212,7 +212,11 @@ def get_ecommerce_metrics(
     end_date: date,
     granularity: str = Query("daily", pattern="^(daily|weekly|monthly)$"),
 ) -> list[dict[str, Any]]:
-    """Get e-commerce KPI metrics for date range"""
+    """Get e-commerce KPI metrics for a date range.
+
+    Returns daily order totals, revenue, conversion rate, and inventory turnover
+    aggregated from the analytics warehouse.
+    """
     try:
         with engine.connect() as conn:
             query = text("""
@@ -243,7 +247,11 @@ def get_ecommerce_metrics(
 def get_conversion_rate(
     days: int = Query(30, ge=1, le=365),
 ) -> dict[str, Any]:
-    """Get conversion rate for last N days"""
+    """Get average conversion rate statistics for the last N days.
+
+    Returns min, max, mean, and standard deviation of the conversion rate
+    aggregated over the requested window.
+    """
     try:
         end_date = datetime.now().date()
         start_date = end_date - timedelta(days=days)
@@ -282,7 +290,11 @@ def get_supply_chain_metrics(
     start_date: date,
     end_date: date,
 ) -> list[dict[str, Any]]:
-    """Get supply chain KPI metrics"""
+    """Get supply-chain KPI metrics for a date range.
+
+    Returns delivery totals, on-time delivery %, average lead time,
+    and supplier quality scores per day.
+    """
     try:
         with engine.connect() as conn:
             query = text("""
@@ -309,7 +321,7 @@ def get_supply_chain_metrics(
 
 @app.get("/supply-chain/supplier/{supplier_id}/performance")
 def get_supplier_performance(supplier_id: int) -> dict[str, Any]:
-    """Get supplier performance metrics"""
+    """Get performance KPIs for a specific supplier (on-time %, quality, lead time)."""
     try:
         with engine.connect() as conn:
             query = text("""
@@ -351,7 +363,11 @@ def get_financial_metrics(
     start_date: date,
     end_date: date,
 ) -> list[dict[str, Any]]:
-    """Get financial KPI metrics"""
+    """Get financial KPI metrics for a date range.
+
+    Returns daily revenue, expense, net income, and gross margin % from the
+    financial analytics mart.
+    """
     try:
         with engine.connect() as conn:
             query = text("""
@@ -382,7 +398,10 @@ def get_budget_vs_actual(
     start_date: date | None = None,
     end_date: date | None = None,
 ) -> dict[str, Any]:
-    """Get budget vs actual comparison"""
+    """Get budget vs actual comparison for a GL account over a date range.
+
+    Defaults to the past 30 days if no date range is supplied.
+    """
     if not start_date:
         start_date = (datetime.now() - timedelta(days=30)).date()
     if not end_date:
@@ -423,7 +442,7 @@ def get_unified_kpis(
     start_date: date,
     end_date: date,
 ) -> list[dict[str, Any]]:
-    """Get unified cross-domain KPIs"""
+    """Get unified cross-domain KPIs joining e-commerce, supply-chain, and financial data."""
     try:
         with engine.connect() as conn:
             query = text("""
