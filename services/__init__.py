@@ -12,4 +12,10 @@ to its domain-specific routes.
 
 from __future__ import annotations
 
-__all__ = ["analytics_api", "anomaly_detection", "forecasting_service"]
+#: Shared version string aligned with pyproject.toml.
+__version__ = "1.1.0"
+
+#: Canonical list of service module names in this package.
+SERVICE_NAMES: list[str] = ["analytics_api", "anomaly_detection", "forecasting_service"]
+
+__all__ = ["analytics_api", "anomaly_detection", "forecasting_service", "__version__", "SERVICE_NAMES"]
