@@ -114,3 +114,44 @@ class TestConfigSettingsEndpoint:
         client = _get_client(service)
         data = client.get("/config/settings").json()
         assert "service" in data
+
+
+# ---------------------------------------------------------------------------
+# Additional extended service tests
+# ---------------------------------------------------------------------------
+
+
+class TestServiceDocumentation:
+    @pytest.mark.parametrize("service", ["analytics_api", "anomaly_detection", "forecasting_service"])
+    def test_openapi_json_accessible(self, service):
+        client = _get_client(service)
+        resp = client.get("/openapi.json")
+        assert resp.status_code == 200
+
+    @pytest.mark.parametrize("service", ["analytics_api", "anomaly_detection", "forecasting_service"])
+    def test_openapi_has_paths(self, service):
+        client = _get_client(service)
+        data = client.get("/openapi.json").json()
+        assert "paths" in data
+        assert len(data["paths"]) > 0
+
+    @pytest.mark.parametrize("service", ["analytics_api", "anomaly_detection", "forecasting_service"])
+    def test_redoc_accessible(self, service):
+        client = _get_client(service)
+        resp = client.get("/redoc")
+        assert resp.status_code == 200
+
+
+class TestServiceErrorHandling:
+    @pytest.mark.parametrize("service", ["analytics_api", "anomaly_detection", "forecasting_service"])
+    def test_nonexistent_endpoint_returns_404(self, service):
+        client = _get_client(service)
+        resp = client.get("/nonexistent-endpoint-xyz")
+        assert resp.status_code == 404
+
+    @pytest.mark.parametrize("service", ["analytics_api", "anomaly_detection", "forecasting_service"])
+    def test_method_not_allowed_returns_405(self, service):
+        client = _get_client(service)
+        # GET-only endpoints should reject POST
+        resp = client.delete("/health")
+        assert resp.status_code in (405, 404)
