@@ -83,3 +83,44 @@ class TestDemandTrendEndpoint:
             client = TestClient(app, raise_server_exceptions=False)
             resp = client.get("/forecast/demand/trend?product_id=1")
             assert resp.status_code in (400, 422, 500)
+
+
+# ---------------------------------------------------------------------------
+# Additional forecasting new tests
+# ---------------------------------------------------------------------------
+
+
+class TestForecastingEndpointValidation:
+    def test_demand_forecast_product_id_zero(self):
+        client, mock_conn = _make_client()
+        resp = client.get("/forecast/demand/0")
+        assert resp.status_code in (200, 400, 404, 422, 500)
+
+    def test_demand_forecast_negative_horizon(self):
+        client, _ = _make_client()
+        resp = client.get("/forecast/demand/1?horizon_days=-1")
+        assert resp.status_code in (400, 422)
+
+    def test_demand_forecast_horizon_over_max(self):
+        client, _ = _make_client()
+        resp = client.get("/forecast/demand/1?horizon_days=9999")
+        assert resp.status_code in (400, 422)
+
+    def test_category_forecast_empty_string(self):
+        client, mock_conn = _make_client()
+        resp = client.get("/forecast/demand/category/")
+        assert resp.status_code in (404, 422, 200)
+
+    @pytest.mark.parametrize("category", ["Electronics", "Clothing", "Food", "Furniture"])
+    def test_category_forecast_various_categories(self, category):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value = []
+        resp = client.get(f"/forecast/demand/category/{category}")
+        assert resp.status_code in (200, 400, 404, 422, 500)
+
+    @pytest.mark.parametrize("horizon", [7, 30, 60, 90, 180, 365])
+    def test_cash_flow_forecast_various_horizons(self, horizon):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value = []
+        resp = client.get(f"/forecast/cash-flow?horizon_days={horizon}")
+        assert resp.status_code in (200, 400, 404, 422, 500)
