@@ -45,7 +45,7 @@ class Settings:
         return cls.database_url.startswith("sqlite")
 
     @classmethod
-    def as_dict(cls) -> dict:
+    def as_dict(cls) -> dict[str, object]:
         """Return a sanitized dict of all settings (no secrets)."""
         return {
             "database_url": cls.database_url.split("@")[-1] if "@" in cls.database_url else "sqlite",
