@@ -1,4 +1,4 @@
-.PHONY: install install-dev test test-all test-integration lint lint-fix format format-check type-check coverage security run-analytics run-anomaly run-forecasting docker-build docker-up docker-down docker-logs clean pre-commit-install help
+.PHONY: install install-dev test test-all test-integration lint lint-fix format format-check type-check coverage security run-analytics run-anomaly run-forecasting docker-build docker-up docker-down docker-logs clean pre-commit-install validate-env health-check help
 
 install:
 	pip install --upgrade pip
@@ -76,6 +76,12 @@ clean:
 pre-commit-install:
 	pre-commit install
 
+validate-env:
+	python scripts/validate_env.py
+
+health-check:
+	python scripts/health_check.py
+
 help:
 	@echo "Available targets:"
 	@echo "  install          Install runtime dependencies"
@@ -98,3 +104,5 @@ help:
 	@echo "  docker-down      Stop all services"
 	@echo "  docker-logs      Tail docker-compose logs"
 	@echo "  clean            Remove build artifacts and caches"
+	@echo "  validate-env     Validate required environment variables"
+	@echo "  health-check     Check health of all running services"
