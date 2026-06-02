@@ -116,3 +116,48 @@ def mock_kafka_consumer() -> Generator:
         mock_instance = MagicMock()
         mock_cls.return_value = mock_instance
         yield mock_instance
+
+
+@pytest.fixture()
+def sample_order_event() -> dict:
+    """Sample Kafka order event payload for testing."""
+    from decimal import Decimal
+    from datetime import datetime
+
+    return {
+        "order_id": 12345,
+        "customer_id": 1001,
+        "product_id": 501,
+        "order_date": datetime.utcnow().isoformat(),
+        "quantity": 3,
+        "list_price": str(Decimal("49.99")),
+        "order_amount": str(Decimal("149.97")),
+        "total_amount": str(Decimal("162.47")),
+        "cost_amount": str(Decimal("89.97")),
+    }
+
+
+@pytest.fixture()
+def sample_delivery_event() -> dict:
+    """Sample Kafka delivery event payload for testing."""
+    from decimal import Decimal
+    from datetime import datetime
+
+    return {
+        "delivery_id": 9001,
+        "po_id": 3001,
+        "supplier_id": 201,
+        "product_id": 501,
+        "quantity_ordered": 100,
+        "quantity_delivered": 98,
+        "unit_cost": str(Decimal("30.00")),
+        "total_cost": str(Decimal("2940.00")),
+        "order_date": datetime.utcnow().isoformat(),
+        "delivery_date": datetime.utcnow().isoformat(),
+    }
+
+
+@pytest.fixture()
+def sample_date_range() -> dict:
+    """Sample date range for analytics queries."""
+    return {"start": "2024-01-01", "end": "2024-01-31"}
