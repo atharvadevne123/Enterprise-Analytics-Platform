@@ -355,3 +355,54 @@ Enterprise-Analytics-Platform/
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for branch strategy, code style, and PR guidelines.
+
+---
+
+## Test Coverage
+
+The test suite contains **22 test modules** covering all layers of the platform:
+
+| Module | Coverage |
+|---|---|
+| `services/analytics_api.py` | Endpoints, models, error handling, date validation |
+| `services/anomaly_detection.py` | Z-score, IQR helpers, alert model, endpoints |
+| `services/forecasting_service.py` | Demand/lead-time/cash-flow, model serialization |
+| `messaging/producer.py` | Send methods, Decimal encoding, error handling |
+| `messaging/consumer.py` | Poll, batch, multi-topic, error handling |
+| `data/models.py` | All Pydantic models, enums, defaults |
+| `config/settings.py` | Env var parsing, defaults, as_dict |
+| `scripts/` | generate_sample_data, validate_env, health_check |
+| `spark/` | Module structure, domain dispatcher |
+| `airflow/dags/` | DAG structure, file integrity |
+
+Run with coverage:
+```bash
+make coverage
+# Report written to htmlcov/index.html
+```
+
+---
+
+## Environment Variables
+
+Copy `.env.example` and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+Key variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `DATABASE_URL` | `postgresql://...` | PostgreSQL connection string |
+| `KAFKA_BROKERS` | `localhost:9092` | Comma-separated Kafka brokers |
+| `ZSCORE_THRESHOLD` | `2.0` | Sigma threshold for anomaly detection |
+| `IQR_MULTIPLIER` | `1.5` | IQR fence multiplier |
+| `LOG_LEVEL` | `INFO` | Python logging level |
+| `API_WORKERS` | `4` | Uvicorn worker count |
+
+Validate your environment:
+```bash
+make validate-env
+```
