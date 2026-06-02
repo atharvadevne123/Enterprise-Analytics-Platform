@@ -190,3 +190,58 @@ class TestConsumerMessageProcessing:
             self.consumer.consume_messages(handler, max_messages=5)
         except (AttributeError, TypeError, StopIteration):
             pass
+
+
+# ---------------------------------------------------------------------------
+# Additional consumer tests
+# ---------------------------------------------------------------------------
+
+
+class TestConsumerEdgeCases:
+    @pytest.fixture()
+    def patched_consumer(self):
+        with patch("messaging.consumer.KafkaConsumer") as mock_kc:
+            mock_kc.return_value = MagicMock()
+            yield mock_kc.return_value
+
+    def test_consumer_close_called_on_context_exit(self, patched_consumer):
+        from messaging.consumer import UnifiedConsumer
+
+        c = UnifiedConsumer("test-topic")
+        c.close()
+        patched_consumer.close.assert_called_once()
+
+    def test_consumer_handles_keyboard_interrupt_gracefully(self, patched_consumer):
+        """Consumer should exit without raising on KeyboardInterrupt."""
+        from messaging.consumer import UnifiedConsumer
+
+        patched_consumer.poll.side_effect = KeyboardInterrupt()
+        c = UnifiedConsumer("test-topic")
+        c.consume_messages(lambda msg, t, p: None)
+
+    @pytest.mark.parametrize("group_id", ["group-a", "group-b", "analytics-prod"])
+    def test_consumer_group_id_assigned(self, group_id):
+        with patch("messaging.consumer.KafkaConsumer") as mock_kc:
+            from messaging.consumer import UnifiedConsumer
+
+            c = UnifiedConsumer("test-topic", group_id=group_id)
+            assert c.group_id == group_id
+
+    def test_multi_topic_consumer_topics_list(self):
+        with patch("messaging.consumer.KafkaConsumer"):
+            from messaging.consumer import MultiTopicConsumer
+
+            topics = ["topic.a", "topic.b", "topic.c"]
+            c = MultiTopicConsumer(topics)
+            assert c.topics == topics
+
+    @pytest.mark.parametrize("broker_urls,expected", [
+        (["localhost:9092"], ["localhost:9092"]),
+        (["b1:9092", "b2:9092"], ["b1:9092", "b2:9092"]),
+    ])
+    def test_consumer_broker_urls(self, broker_urls, expected):
+        with patch("messaging.consumer.KafkaConsumer"):
+            from messaging.consumer import UnifiedConsumer
+
+            c = UnifiedConsumer("test-topic", broker_urls=broker_urls)
+            assert c.broker_urls == expected
