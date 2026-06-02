@@ -37,7 +37,7 @@ app = FastAPI(
 
 
 @app.middleware("http")
-async def add_correlation_id(request: Request, call_next):
+async def add_correlation_id(request: Request, call_next: Any) -> Any:
     """Attach a unique X-Request-ID header to every response for tracing."""
     correlation_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
     logger.info("Request %s %s [id=%s]", request.method, request.url.path, correlation_id)
@@ -50,7 +50,7 @@ async def add_correlation_id(request: Request, call_next):
 DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/analytics_warehouse")
 
 
-def _make_engine(url: str):
+def _make_engine(url: str) -> Any:
     """Create a SQLAlchemy engine appropriate for the dialect."""
     if url.startswith("sqlite"):
         return create_engine(url, connect_args={"check_same_thread": False})
@@ -62,6 +62,8 @@ engine = _make_engine(DB_URL)
 
 # Response models
 class AnomalyAlert(BaseModel):
+    """Anomaly detection result with severity, domain, and recommended action."""
+
     alert_id: str
     severity: str  # CRITICAL, WARNING, INFO
     domain: str
@@ -401,8 +403,8 @@ def detect_delivery_anomaly(current_date: date | None = None) -> dict[str, Any]:
 
 
 @app.post("/detect/financial/budget-variance")
-def detect_budget_variance_anomaly(gl_account_id: str, current_date: date | None = None):
-    """Detect anomaly in budget variance"""
+def detect_budget_variance_anomaly(gl_account_id: str, current_date: date | None = None) -> dict[str, Any]:
+    """Detect anomaly in budget variance."""
     if not current_date:
         current_date = datetime.now().date()
 
