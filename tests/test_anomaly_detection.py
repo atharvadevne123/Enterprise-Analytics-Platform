@@ -259,9 +259,10 @@ class TestDetectionMethods:
 class TestAnomalyAlertModel:
     def test_severity_levels(self):
         """Alert severity should be one of the expected values."""
-        from services.anomaly_detection import AnomalyAlert
         from datetime import datetime
         from decimal import Decimal
+
+        from services.anomaly_detection import AnomalyAlert
 
         alert = AnomalyAlert(
             alert_id="test-001",
@@ -279,9 +280,10 @@ class TestAnomalyAlertModel:
 
     def test_alert_serialization(self):
         """Alert should serialize to JSON without errors."""
-        from services.anomaly_detection import AnomalyAlert
         from datetime import datetime
         from decimal import Decimal
+
+        from services.anomaly_detection import AnomalyAlert
 
         alert = AnomalyAlert(
             alert_id="test-002",

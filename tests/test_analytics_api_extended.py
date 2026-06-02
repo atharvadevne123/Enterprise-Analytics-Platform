@@ -1,8 +1,23 @@
+"""Additional extended tests for the analytics API service."""
+
+from __future__ import annotations
+
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 
 
-# ---------------------------------------------------------------------------
-# Additional analytics API extended tests
-# ---------------------------------------------------------------------------
+def _make_client(rows=None):
+    mock_conn = MagicMock()
+    if rows is not None:
+        mock_conn.execute.return_value = rows
+    with patch("services.analytics_api._make_engine") as mock_eng:
+        mock_eng.return_value.connect.return_value.__enter__ = lambda s: mock_conn
+        mock_eng.return_value.connect.return_value.__exit__ = MagicMock(return_value=False)
+        from services.analytics_api import app
+        client = TestClient(app, raise_server_exceptions=False)
+        return client, mock_conn
 
 
 class TestDateRangeConstraints:

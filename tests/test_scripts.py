@@ -153,7 +153,7 @@ class TestGenerateSampleDataScript:
 # ---------------------------------------------------------------------------
 
 
-class TestValidateEnvScript:
+class TestValidateEnvScriptExtended:
     def test_parse_env_example_returns_list(self, tmp_path):
         from scripts.validate_env import parse_env_example
 
@@ -187,7 +187,7 @@ class TestValidateEnvScript:
         assert results["UNSET_VAR_XYZ"] is False
 
 
-class TestGenerateSampleDataScript:
+class TestGenerateSampleDataScriptExtended:
     def test_write_ecommerce_creates_file(self, tmp_path):
         from scripts.generate_sample_data import write_ecommerce
 

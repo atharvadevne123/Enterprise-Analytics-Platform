@@ -105,22 +105,25 @@ class TestDateRangeFilter:
 
 class TestDateRangeRequestModel:
     def test_date_range_request_valid(self):
-        from services.analytics_api import DateRangeRequest
         from datetime import date
+
+        from services.analytics_api import DateRangeRequest
 
         req = DateRangeRequest(start_date=date(2024, 1, 1), end_date=date(2024, 12, 31))
         assert req.start_date < req.end_date
 
     def test_date_range_request_same_day(self):
-        from services.analytics_api import DateRangeRequest
         from datetime import date
+
+        from services.analytics_api import DateRangeRequest
 
         req = DateRangeRequest(start_date=date(2024, 6, 15), end_date=date(2024, 6, 15))
         assert req.start_date == req.end_date
 
     def test_date_range_request_end_before_start_raises(self):
-        from services.analytics_api import DateRangeRequest
         from datetime import date
+
+        from services.analytics_api import DateRangeRequest
 
         with pytest.raises(Exception):
             DateRangeRequest(start_date=date(2024, 12, 31), end_date=date(2024, 1, 1))
@@ -131,8 +134,9 @@ class TestDateRangeRequestModel:
         ("2024-12-01", "2024-12-31"),
     ])
     def test_date_range_various_valid_ranges(self, start, end):
-        from services.analytics_api import DateRangeRequest
         from datetime import date
+
+        from services.analytics_api import DateRangeRequest
 
         s = date.fromisoformat(start)
         e = date.fromisoformat(end)

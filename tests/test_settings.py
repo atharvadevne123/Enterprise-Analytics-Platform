@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
+import pytest
+
 
 class TestSettingsDefaults:
     def test_database_url_has_default(self):
@@ -120,7 +122,7 @@ class TestSettingsMethods:
 # ---------------------------------------------------------------------------
 
 
-class TestSettingsDefaults:
+class TestSettingsThresholdDefaults:
     def test_default_zscore_threshold(self):
         from config.settings import Settings
 

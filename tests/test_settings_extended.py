@@ -22,6 +22,7 @@ class TestNewSettingsAttributes:
     def test_max_history_days_env_override(self):
         with patch.dict(os.environ, {"MAX_HISTORY_DAYS": "180"}):
             from importlib import reload
+
             import config.settings as m
             reload(m)
             assert m.Settings.max_history_days == 180
@@ -29,6 +30,7 @@ class TestNewSettingsAttributes:
     def test_min_anomaly_data_points_env_override(self):
         with patch.dict(os.environ, {"MIN_ANOMALY_DATA_POINTS": "20"}):
             from importlib import reload
+
             import config.settings as m
             reload(m)
             assert m.Settings.min_anomaly_data_points == 20

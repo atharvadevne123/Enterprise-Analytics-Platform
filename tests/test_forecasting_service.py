@@ -209,9 +209,10 @@ class TestActualForecastEndpoints:
 class TestForecastModels:
     def test_demand_forecast_model_fields(self):
         """DemandForecast must have required fields."""
-        from services.forecasting_service import DemandForecast
         from datetime import date, datetime
         from decimal import Decimal
+
+        from services.forecasting_service import DemandForecast
 
         forecast = DemandForecast(
             product_id=1,
@@ -229,9 +230,10 @@ class TestForecastModels:
 
     def test_cash_flow_net_calculation(self):
         """Net cash flow should be inflow minus outflow."""
-        from services.forecasting_service import CashFlowForecast
         from datetime import date, datetime
         from decimal import Decimal
+
+        from services.forecasting_service import CashFlowForecast
 
         forecast = CashFlowForecast(
             forecast_date=date.today(),

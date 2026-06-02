@@ -251,8 +251,8 @@ class TestModelDefaults:
         assert isinstance(event.timestamp, datetime)
 
     def test_order_event_defaults(self):
-        from decimal import Decimal
         from datetime import datetime
+        from decimal import Decimal
 
         from data.models import OrderEvent, OrderStatus, PaymentStatus
 

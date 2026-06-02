@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
+import pytest
+
 
 class TestDatabaseURLConfiguration:
     """Verify DATABASE_URL env var drives engine creation."""

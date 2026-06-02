@@ -221,7 +221,7 @@ class TestConsumerEdgeCases:
 
     @pytest.mark.parametrize("group_id", ["group-a", "group-b", "analytics-prod"])
     def test_consumer_group_id_assigned(self, group_id):
-        with patch("messaging.consumer.KafkaConsumer") as mock_kc:
+        with patch("messaging.consumer.KafkaConsumer"):
             from messaging.consumer import UnifiedConsumer
 
             c = UnifiedConsumer("test-topic", group_id=group_id)

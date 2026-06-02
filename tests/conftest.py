@@ -121,8 +121,8 @@ def mock_kafka_consumer() -> Generator:
 @pytest.fixture()
 def sample_order_event() -> dict:
     """Sample Kafka order event payload for testing."""
-    from decimal import Decimal
     from datetime import datetime
+    from decimal import Decimal
 
     return {
         "order_id": 12345,
@@ -140,8 +140,8 @@ def sample_order_event() -> dict:
 @pytest.fixture()
 def sample_delivery_event() -> dict:
     """Sample Kafka delivery event payload for testing."""
-    from decimal import Decimal
     from datetime import datetime
+    from decimal import Decimal
 
     return {
         "delivery_id": 9001,
