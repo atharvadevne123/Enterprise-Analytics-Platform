@@ -24,6 +24,8 @@ class BaseAnalyticsModel(BaseModel):
 
 
 class OrderStatus(str, Enum):
+    """Lifecycle states for a customer order."""
+
     PENDING = "pending"
     SHIPPED = "shipped"
     DELIVERED = "delivered"
@@ -32,6 +34,8 @@ class OrderStatus(str, Enum):
 
 
 class PaymentStatus(str, Enum):
+    """Payment lifecycle states for an order or invoice."""
+
     PENDING = "pending"
     PAID = "paid"
     FAILED = "failed"
@@ -39,6 +43,8 @@ class PaymentStatus(str, Enum):
 
 
 class DeliveryStatus(str, Enum):
+    """Lifecycle states for a physical delivery."""
+
     PENDING = "pending"
     IN_TRANSIT = "in_transit"
     DELIVERED = "delivered"
@@ -47,6 +53,8 @@ class DeliveryStatus(str, Enum):
 
 
 class TransactionType(str, Enum):
+    """Types of general-ledger financial transactions."""
+
     JOURNAL_ENTRY = "journal_entry"
     INVOICE = "invoice"
     PAYMENT = "payment"
@@ -55,6 +63,8 @@ class TransactionType(str, Enum):
 
 
 class CustomerSegment(str, Enum):
+    """Customer segmentation tiers for targeted analytics."""
+
     VIP = "vip"
     REGULAR = "regular"
     NEW = "new"
@@ -139,6 +149,8 @@ class InventoryEvent(BaseAnalyticsModel):
 
 
 class Supplier(BaseAnalyticsModel):
+    """Supplier master record with performance and contract details."""
+
     supplier_id: int
     supplier_name: str
     country: str
@@ -197,6 +209,8 @@ class DeliveryEvent(BaseAnalyticsModel):
 
 
 class GLAccount(BaseAnalyticsModel):
+    """General ledger account master record."""
+
     gl_account_id: str
     account_name: str
     account_type: str  # Asset, Liability, Equity, Revenue, Expense
