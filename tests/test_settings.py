@@ -113,3 +113,59 @@ class TestSettingsMethods:
             importlib.reload(cfg)
             d = cfg.Settings.as_dict()
             assert "secret" not in str(d)
+
+
+# ---------------------------------------------------------------------------
+# Additional settings tests
+# ---------------------------------------------------------------------------
+
+
+class TestSettingsDefaults:
+    def test_default_zscore_threshold(self):
+        from config.settings import Settings
+
+        assert Settings.zscore_threshold == pytest.approx(2.0)
+
+    def test_default_iqr_multiplier(self):
+        from config.settings import Settings
+
+        assert Settings.iqr_multiplier == pytest.approx(1.5)
+
+    def test_default_forecast_horizon(self):
+        from config.settings import Settings
+
+        assert Settings.default_forecast_horizon_days == 30
+
+    def test_kafka_brokers_is_list(self):
+        from config.settings import Settings
+
+        assert isinstance(Settings.kafka_brokers, list)
+        assert len(Settings.kafka_brokers) >= 1
+
+    @pytest.mark.parametrize("env_val,expected", [
+        ("2.5", 2.5),
+        ("3.0", 3.0),
+        ("1.0", 1.0),
+    ])
+    def test_zscore_threshold_from_env(self, env_val, expected):
+        import importlib
+
+        with patch.dict(os.environ, {"ZSCORE_THRESHOLD": env_val}):
+            import config.settings as cfg
+
+            importlib.reload(cfg)
+            assert cfg.Settings.zscore_threshold == pytest.approx(expected)
+
+    @pytest.mark.parametrize("brokers,expected_count", [
+        ("localhost:9092", 1),
+        ("broker1:9092,broker2:9092", 2),
+        ("b1:9092,b2:9092,b3:9092", 3),
+    ])
+    def test_kafka_brokers_parsing(self, brokers, expected_count):
+        import importlib
+
+        with patch.dict(os.environ, {"KAFKA_BROKERS": brokers}):
+            import config.settings as cfg
+
+            importlib.reload(cfg)
+            assert len(cfg.Settings.kafka_brokers) == expected_count
