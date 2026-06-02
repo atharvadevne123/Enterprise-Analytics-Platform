@@ -37,7 +37,7 @@ app = FastAPI(
 
 
 @app.middleware("http")
-async def add_correlation_id(request: Request, call_next):
+async def add_correlation_id(request: Request, call_next: Any) -> Any:
     """Attach a unique X-Request-ID header to every response for tracing."""
     correlation_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
     logger.info("Request %s %s [id=%s]", request.method, request.url.path, correlation_id)
@@ -50,7 +50,7 @@ async def add_correlation_id(request: Request, call_next):
 DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/analytics_warehouse")
 
 
-def _make_engine(url: str):
+def _make_engine(url: str) -> Any:
     """Create a SQLAlchemy engine appropriate for the dialect."""
     if url.startswith("sqlite"):
         return create_engine(url, connect_args={"check_same_thread": False})
@@ -79,6 +79,8 @@ class DateRangeRequest(BaseModel):
 
 # Response models
 class KPIMetric(BaseModel):
+    """Single KPI metric value with optional target and variance."""
+
     date: date
     metric_name: str
     value: Decimal
@@ -90,6 +92,8 @@ class KPIMetric(BaseModel):
 
 
 class ECommerceMetrics(BaseModel):
+    """Aggregated e-commerce KPIs for a given day."""
+
     date: date
     total_orders: int
     total_customers: int
@@ -103,6 +107,8 @@ class ECommerceMetrics(BaseModel):
 
 
 class SupplyChainMetrics(BaseModel):
+    """Daily supply-chain performance metrics."""
+
     date: date
     total_deliveries: int
     on_time_delivery_pct: Decimal
@@ -114,6 +120,8 @@ class SupplyChainMetrics(BaseModel):
 
 
 class FinancialMetrics(BaseModel):
+    """Daily P&L summary from the general ledger."""
+
     date: date
     total_revenue: Decimal
     total_expense: Decimal
@@ -125,6 +133,8 @@ class FinancialMetrics(BaseModel):
 
 
 class UnifiedKPIs(BaseModel):
+    """Cross-domain KPIs that join e-commerce, supply-chain, and financial data."""
+
     date: date
     revenue_per_supplier: Decimal
     profit_per_product: Decimal
