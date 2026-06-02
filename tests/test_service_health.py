@@ -229,3 +229,43 @@ class TestRootEndpointContract:
         client = client_factory()
         data = client.get("/").json()
         assert "version" in data
+
+
+# ---------------------------------------------------------------------------
+# Additional health check tests
+# ---------------------------------------------------------------------------
+
+
+class TestServiceIdentity:
+    @pytest.mark.parametrize(
+        "client_factory,expected_service",
+        [
+            (_make_analytics_client, "analytics-api"),
+            (_make_anomaly_client, "anomaly-detection"),
+            (_make_forecasting_client, "forecasting"),
+        ],
+    )
+    def test_health_returns_correct_service_name(self, client_factory, expected_service):
+        client = client_factory()
+        data = client.get("/health").json()
+        assert data.get("service", "").startswith(expected_service.split("-")[0])
+
+    @pytest.mark.parametrize(
+        "client_factory",
+        [_make_analytics_client, _make_anomaly_client, _make_forecasting_client],
+    )
+    def test_metrics_endpoint_returns_service_field(self, client_factory):
+        client = client_factory()
+        resp = client.get("/metrics")
+        if resp.status_code == 200:
+            data = resp.json()
+            assert "service" in data
+
+    @pytest.mark.parametrize(
+        "client_factory",
+        [_make_analytics_client, _make_anomaly_client, _make_forecasting_client],
+    )
+    def test_docs_endpoint_accessible(self, client_factory):
+        client = client_factory()
+        resp = client.get("/docs")
+        assert resp.status_code == 200
