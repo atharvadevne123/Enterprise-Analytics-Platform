@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added
+- Additional parametrized tests for all service modules (analytics_api, anomaly_detection, forecasting_service)
+- Cross-service header consistency integration tests
+- OpenAPI docs accessibility and error-handling tests
+- Expanded Kafka producer/consumer test coverage with edge cases
+- Additional data model validation tests for Supplier, GLAccount, UnifiedKPIMetrics
+- New fixtures: sample_order_event, sample_delivery_event, sample_date_range
+
+### Changed
+- Replaced `print()` calls in all scripts with structured `logging`
+- Improved docstrings for all API endpoint functions
+- Tightened return type annotations across service modules and DAGs
 
 ## [1.2.0-dev] — (next release)
 
