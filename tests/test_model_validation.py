@@ -183,3 +183,67 @@ class TestInventoryEvent:
         )
         assert e.product_id == 42
         assert e.change_quantity == -50
+
+
+# ---------------------------------------------------------------------------
+# Additional model validation tests
+# ---------------------------------------------------------------------------
+
+
+class TestSupplierModel:
+    def test_supplier_default_active(self):
+        from data.models import Supplier
+
+        s = Supplier(supplier_id=1, supplier_name="Test Co", country="US", lead_time_days=5)
+        assert s.is_active is True
+
+    @pytest.mark.parametrize("lead_time", [1, 7, 14, 30, 90])
+    def test_supplier_various_lead_times(self, lead_time):
+        from data.models import Supplier
+
+        s = Supplier(supplier_id=2, supplier_name="Supplier X", country="DE", lead_time_days=lead_time)
+        assert s.lead_time_days == lead_time
+
+    def test_supplier_quality_score_default(self):
+        from decimal import Decimal
+
+        from data.models import Supplier
+
+        s = Supplier(supplier_id=3, supplier_name="Acme", country="JP", lead_time_days=10)
+        assert s.quality_score == Decimal("0.00")
+
+
+class TestUnifiedKPIMetrics:
+    def test_unified_kpi_all_required_fields(self):
+        from datetime import datetime
+        from decimal import Decimal
+
+        from data.models import UnifiedKPIMetrics
+
+        kpi = UnifiedKPIMetrics(
+            date=datetime.utcnow(),
+            revenue_per_supplier=Decimal("50000"),
+            profit_per_product=Decimal("25.50"),
+            order_to_cash_cycle_days=7,
+            inventory_to_sales_ratio=Decimal("0.15"),
+            cash_conversion_cycle_days=30,
+        )
+        assert kpi.order_to_cash_cycle_days == 7
+        assert kpi.return_rate_pct == Decimal("0.00")
+
+    def test_unified_kpi_custom_return_rate(self):
+        from datetime import datetime
+        from decimal import Decimal
+
+        from data.models import UnifiedKPIMetrics
+
+        kpi = UnifiedKPIMetrics(
+            date=datetime.utcnow(),
+            revenue_per_supplier=Decimal("30000"),
+            profit_per_product=Decimal("10.00"),
+            order_to_cash_cycle_days=5,
+            inventory_to_sales_ratio=Decimal("0.20"),
+            cash_conversion_cycle_days=25,
+            return_rate_pct=Decimal("2.5"),
+        )
+        assert kpi.return_rate_pct == Decimal("2.5")
