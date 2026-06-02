@@ -39,10 +39,31 @@ class Settings:
     # Workers
     api_workers: int = int(os.getenv("API_WORKERS", "4"))
 
+    # Anomaly history window
+    max_history_days: int = int(os.getenv("MAX_HISTORY_DAYS", "90"))
+
+    # Minimum data points required before running anomaly detection
+    min_anomaly_data_points: int = int(os.getenv("MIN_ANOMALY_DATA_POINTS", "10"))
+
     @classmethod
     def is_test_environment(cls) -> bool:
         """Return True when DATABASE_URL points to SQLite (test mode)."""
         return cls.database_url.startswith("sqlite")
+
+    @classmethod
+    def get_kafka_topics(cls) -> list[str]:
+        """Return the canonical list of Kafka topics for all domains."""
+        return [
+            "ecommerce.orders",
+            "ecommerce.inventory",
+            "ecommerce.customers",
+            "supply_chain.suppliers",
+            "supply_chain.deliveries",
+            "supply_chain.purchase_orders",
+            "financials.transactions",
+            "financials.budgets",
+            "financials.actuals",
+        ]
 
     @classmethod
     def as_dict(cls) -> dict[str, object]:
