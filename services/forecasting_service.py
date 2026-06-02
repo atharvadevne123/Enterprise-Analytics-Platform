@@ -303,7 +303,7 @@ def forecast_category_demand(
 
 @app.get("/forecast/lead-time/{supplier_id}")
 def forecast_supplier_lead_time(supplier_id: int) -> dict[str, Any]:
-    """Forecast supplier lead time"""
+    """Forecast expected lead time for a supplier using historical delivery data."""
     try:
         with engine.connect() as conn:
             # Get historical lead times
