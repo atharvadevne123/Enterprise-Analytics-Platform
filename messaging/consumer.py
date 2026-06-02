@@ -54,7 +54,7 @@ class UnifiedConsumer:
 
         logger.info(f"Kafka consumer initialized for topic: {topic}")
 
-    def consume_messages(self, message_handler: Callable, timeout_ms: int = 1000, max_messages: int | None = None):
+    def consume_messages(self, message_handler: Callable, timeout_ms: int = 1000, max_messages: int | None = None) -> int:
         """
         Consume messages from Kafka
 
@@ -260,7 +260,7 @@ class MultiTopicConsumer:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    def process_message(message, topic, partition):
+    def process_message(message: dict, topic: str, partition: int) -> None:
         logger.info("[%s:%s] %s", topic, partition, message)
 
     # Example: consume from single topic
