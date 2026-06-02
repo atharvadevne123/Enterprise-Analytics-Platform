@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `Settings.validate()` method — surfaces misconfigured thresholds and out-of-range ports as a list of human-readable error strings
+- `Settings.get_kafka_topics()` helper — returns the canonical nine-topic list for all domains
+- `Settings.max_history_days` and `Settings.min_anomaly_data_points` environment-variable-backed attributes
+- `MAX_HISTORY_DAYS` and `MIN_ANOMALY_DATA_POINTS` variables added to `.env.example`
+- `__version__` and `SERVICE_NAMES` constants exported from the `services` package
+- `Settings` and `settings` singleton re-exported from `config` package `__init__`
+- `tests/test_config_yaml.py` — YAML structure, Kafka topic naming, and Airflow schedule validation
+- `tests/test_spark_module_structure.py` — AST-based structural tests for all three Spark ETL modules
+- `tests/test_settings_extended.py` — tests for new settings attributes and `get_kafka_topics`
+- `tests/test_settings_validate.py` — threshold and port validation edge cases
+- `tests/test_services_package.py` — package interface, module existence, and endpoint presence tests
+- `tests/test_data_package.py` — data model importability, inheritance, and KPI/forecast model tests
+- `tests/test_messaging_init.py` — messaging package export and class attribute tests
 - Additional parametrized tests for all service modules (analytics_api, anomaly_detection, forecasting_service)
 - Cross-service header consistency integration tests
 - OpenAPI docs accessibility and error-handling tests
@@ -19,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced `print()` calls in all scripts with structured `logging`
 - Improved docstrings for all API endpoint functions
 - Tightened return type annotations across service modules and DAGs
+- Expanded `CONTRIBUTING.md` with configuration validation workflow and adding-new-setting guide
 
 ## [1.2.0-dev] — (next release)
 
