@@ -547,7 +547,7 @@ def get_active_alerts(
 
 @app.post("/alerts/{alert_id}/acknowledge")
 def acknowledge_alert(alert_id: str) -> dict[str, str]:
-    """Acknowledge an alert"""
+    """Mark a specific alert as acknowledged so it no longer appears in active alerts."""
     try:
         return {"alert_id": alert_id, "status": "acknowledged", "timestamp": datetime.now().isoformat()}
 
