@@ -122,3 +122,43 @@ class TestAirflowDags:
         with open("airflow/dags/data_validation_dag.py") as f:
             content = f.read()
         assert "DAG" in content or "dag" in content
+
+
+# ---------------------------------------------------------------------------
+# Additional Spark job tests
+# ---------------------------------------------------------------------------
+
+
+class TestSparkModuleImport:
+    def test_calculate_kpis_module_structure(self):
+        """calculate_kpis.py must define the four domain functions."""
+        with open("spark/calculate_kpis.py") as f:
+            content = f.read()
+        for func in ["calculate_ecommerce_kpis", "calculate_supply_chain_kpis", "calculate_financial_kpis", "calculate_unified_kpis"]:
+            assert func in content
+
+    def test_load_dimensions_module_structure(self):
+        """load_dimensions.py must define dimension loader functions."""
+        with open("spark/load_dimensions.py") as f:
+            content = f.read()
+        for func in ["load_products_dimension", "load_customers_dimension", "load_suppliers_dimension"]:
+            assert func in content
+
+    def test_load_facts_module_structure(self):
+        """load_facts.py must define fact loader functions."""
+        with open("spark/load_facts.py") as f:
+            content = f.read()
+        for func in ["load_orders_fact", "load_deliveries_fact", "load_transactions_fact"]:
+            assert func in content
+
+    def test_calculate_kpis_has_logger(self):
+        with open("spark/calculate_kpis.py") as f:
+            content = f.read()
+        assert "logger" in content and "logging" in content
+
+    @pytest.mark.parametrize("domain", ["ecommerce", "supply_chain", "financial", "unified"])
+    def test_calculate_kpis_handles_domain(self, domain):
+        """All four domain branches must exist in the main() dispatcher."""
+        with open("spark/calculate_kpis.py") as f:
+            content = f.read()
+        assert domain in content
