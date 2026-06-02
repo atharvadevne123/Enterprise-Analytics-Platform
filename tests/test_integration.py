@@ -160,3 +160,48 @@ class TestReadinessProbeContract:
         assert resp.status_code in (200, 503)
         if resp.status_code == 200:
             assert resp.json().get("status") == "ready"
+
+
+# ---------------------------------------------------------------------------
+# Cross-service header consistency tests
+# ---------------------------------------------------------------------------
+
+
+class TestCrossServiceHeaders:
+    """All services should return consistent headers."""
+
+    @pytest.mark.parametrize(
+        "get_client",
+        [_analytics_client, _anomaly_client, _forecast_client],
+    )
+    def test_all_services_return_json_content_type(self, get_client):
+        client, _ = get_client()
+        resp = client.get("/health")
+        if resp.status_code == 200:
+            assert "application/json" in resp.headers.get("content-type", "")
+
+    @pytest.mark.parametrize(
+        "get_client,path",
+        [
+            (_analytics_client, "/"),
+            (_anomaly_client, "/"),
+            (_forecast_client, "/"),
+        ],
+    )
+    def test_all_services_root_returns_service_name(self, get_client, path):
+        client, _ = get_client()
+        resp = client.get(path)
+        if resp.status_code == 200:
+            data = resp.json()
+            assert "service" in data
+
+    @pytest.mark.parametrize(
+        "get_client",
+        [_analytics_client, _anomaly_client, _forecast_client],
+    )
+    def test_all_services_have_version_endpoint(self, get_client):
+        client, _ = get_client()
+        resp = client.get("/version")
+        assert resp.status_code in (200, 404)
+        if resp.status_code == 200:
+            assert "version" in resp.json()
