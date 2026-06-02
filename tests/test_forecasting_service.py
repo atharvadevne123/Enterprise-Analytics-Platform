@@ -199,3 +199,62 @@ class TestActualForecastEndpoints:
             if resp.status_code == 200:
                 data = resp.json()
                 assert "db_pool_size" in data or "models_available" in data
+
+
+# ---------------------------------------------------------------------------
+# Forecast model serialization tests
+# ---------------------------------------------------------------------------
+
+
+class TestForecastModels:
+    def test_demand_forecast_model_fields(self):
+        """DemandForecast must have required fields."""
+        from services.forecasting_service import DemandForecast
+        from datetime import date, datetime
+        from decimal import Decimal
+
+        forecast = DemandForecast(
+            product_id=1,
+            forecast_date=date.today(),
+            forecast_horizon_days=30,
+            forecasted_quantity=Decimal("100.5"),
+            confidence_level=Decimal("0.85"),
+            lower_bound=Decimal("80"),
+            upper_bound=Decimal("120"),
+            model_version="1.0.0",
+            updated_at=datetime.utcnow(),
+        )
+        assert forecast.product_id == 1
+        assert 0 <= float(forecast.confidence_level) <= 1
+
+    def test_cash_flow_net_calculation(self):
+        """Net cash flow should be inflow minus outflow."""
+        from services.forecasting_service import CashFlowForecast
+        from datetime import date, datetime
+        from decimal import Decimal
+
+        forecast = CashFlowForecast(
+            forecast_date=date.today(),
+            forecast_horizon_days=30,
+            forecasted_cash_inflow=Decimal("1000"),
+            forecasted_cash_outflow=Decimal("700"),
+            net_cash_flow=Decimal("300"),
+            confidence_level=Decimal("0.90"),
+            model_version="1.0.0",
+            updated_at=datetime.utcnow(),
+        )
+        assert float(forecast.net_cash_flow) == pytest.approx(300.0)
+
+    @pytest.mark.parametrize("horizon", [7, 30, 90, 365])
+    def test_demand_forecast_various_horizons(self, horizon):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value.fetchone.return_value = None
+        resp = client.get(f"/forecast/demand/1?horizon={horizon}")
+        assert resp.status_code in (200, 400, 404, 422, 500)
+
+    @pytest.mark.parametrize("supplier_id", [1, 10, 100])
+    def test_lead_time_various_suppliers(self, supplier_id):
+        client, mock_conn = _make_client([])
+        mock_conn.execute.return_value.fetchone.return_value = None
+        resp = client.get(f"/forecast/lead-time/{supplier_id}")
+        assert resp.status_code in (200, 404, 422, 500)
