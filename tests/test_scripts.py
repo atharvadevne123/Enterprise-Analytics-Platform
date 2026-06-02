@@ -146,3 +146,68 @@ class TestGenerateSampleDataScript:
 
         with (out / "financial_daily_metrics.csv").open() as f:
             assert len(list(csv_module.DictReader(f))) == rows
+
+
+# ---------------------------------------------------------------------------
+# Additional script tests
+# ---------------------------------------------------------------------------
+
+
+class TestValidateEnvScript:
+    def test_parse_env_example_returns_list(self, tmp_path):
+        from scripts.validate_env import parse_env_example
+
+        env_file = tmp_path / ".env.example"
+        env_file.write_text("DATABASE_URL=postgresql://localhost/db\nKAFKA_BROKERS=localhost:9092\n")
+        result = parse_env_example(str(env_file))
+        assert "DATABASE_URL" in result
+        assert "KAFKA_BROKERS" in result
+
+    def test_parse_env_example_ignores_comments(self, tmp_path):
+        from scripts.validate_env import parse_env_example
+
+        env_file = tmp_path / ".env.example"
+        env_file.write_text("# This is a comment\nACTUAL_VAR=value\n")
+        result = parse_env_example(str(env_file))
+        assert "ACTUAL_VAR" in result
+        assert len([r for r in result if "comment" in r.lower()]) == 0
+
+    def test_parse_env_example_missing_file(self):
+        from scripts.validate_env import parse_env_example
+
+        result = parse_env_example("/nonexistent/.env.example")
+        assert result == []
+
+    def test_check_env_vars_detects_set_vars(self, monkeypatch):
+        from scripts.validate_env import check_env_vars
+
+        monkeypatch.setenv("MY_TEST_VAR", "hello")
+        results = dict(check_env_vars(["MY_TEST_VAR", "UNSET_VAR_XYZ"]))
+        assert results["MY_TEST_VAR"] is True
+        assert results["UNSET_VAR_XYZ"] is False
+
+
+class TestGenerateSampleDataScript:
+    def test_write_ecommerce_creates_file(self, tmp_path):
+        from scripts.generate_sample_data import write_ecommerce
+
+        path = write_ecommerce(tmp_path, 5)
+        assert path.exists()
+        with open(path) as f:
+            lines = f.readlines()
+        assert len(lines) == 6  # header + 5 rows
+
+    def test_write_financial_creates_file(self, tmp_path):
+        from scripts.generate_sample_data import write_financial
+
+        path = write_financial(tmp_path, 3)
+        assert path.exists()
+
+    def test_write_supply_chain_creates_file(self, tmp_path):
+        from scripts.generate_sample_data import write_supply_chain
+
+        path = write_supply_chain(tmp_path, 4)
+        assert path.exists()
+        with open(path) as f:
+            lines = f.readlines()
+        assert len(lines) == 5  # header + 4 rows
