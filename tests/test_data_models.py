@@ -205,3 +205,79 @@ class TestCustomerModel:
 
         c = self._make_customer(segment=CustomerSegment(segment_val))
         assert c.segment.value == segment_val
+
+
+# ---------------------------------------------------------------------------
+# Additional model tests
+# ---------------------------------------------------------------------------
+
+
+class TestEnumValues:
+    @pytest.mark.parametrize("status", ["pending", "shipped", "delivered", "cancelled", "returned"])
+    def test_order_status_values(self, status):
+        from data.models import OrderStatus
+
+        s = OrderStatus(status)
+        assert s.value == status
+
+    @pytest.mark.parametrize("status", ["pending", "paid", "failed", "refunded"])
+    def test_payment_status_values(self, status):
+        from data.models import PaymentStatus
+
+        s = PaymentStatus(status)
+        assert s.value == status
+
+    @pytest.mark.parametrize("tx_type", ["journal_entry", "invoice", "payment", "credit_memo", "debit_memo"])
+    def test_transaction_type_values(self, tx_type):
+        from data.models import TransactionType
+
+        t = TransactionType(tx_type)
+        assert t.value == tx_type
+
+
+class TestModelDefaults:
+    def test_inventory_event_default_timestamp(self):
+        from datetime import datetime
+
+        from data.models import InventoryEvent
+
+        event = InventoryEvent(
+            product_id=1,
+            stock_level=100,
+            previous_level=80,
+            change_quantity=20,
+            change_reason="Purchase",
+        )
+        assert isinstance(event.timestamp, datetime)
+
+    def test_order_event_defaults(self):
+        from decimal import Decimal
+        from datetime import datetime
+
+        from data.models import OrderEvent, OrderStatus, PaymentStatus
+
+        event = OrderEvent(
+            order_id=1,
+            customer_id=1,
+            product_id=1,
+            order_date=datetime.utcnow(),
+            quantity=5,
+            list_price=Decimal("50.00"),
+            order_amount=Decimal("250.00"),
+            total_amount=Decimal("260.00"),
+            cost_amount=Decimal("200.00"),
+        )
+        assert event.order_status == OrderStatus.PENDING
+        assert event.payment_status == PaymentStatus.PENDING
+
+    def test_gl_account_balance_sheet_flag(self):
+        from data.models import GLAccount
+
+        account = GLAccount(
+            gl_account_id="ASSET-001",
+            account_name="Cash",
+            account_type="Asset",
+            is_balance_sheet=True,
+        )
+        assert account.is_balance_sheet is True
+        assert account.is_active is True
