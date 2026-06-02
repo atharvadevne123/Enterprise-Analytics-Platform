@@ -156,3 +156,56 @@ class TestDecimalEncoder:
 
         with pytest.raises(TypeError):
             json.dumps({"v": object()}, cls=DecimalEncoder)
+
+
+# ---------------------------------------------------------------------------
+# Additional send method tests
+# ---------------------------------------------------------------------------
+
+
+class TestSendMethods:
+    @pytest.fixture()
+    def mock_producer(self):
+        with patch("messaging.producer.KafkaProducer") as mock_kp:
+            mock_kp.return_value.send.return_value = MagicMock()
+            yield mock_kp.return_value
+
+    @pytest.mark.parametrize(
+        "method,data,key_field",
+        [
+            ("send_order_event", {"order_id": 1, "amount": 100}, "order_id"),
+            ("send_customer_event", {"customer_id": 5, "name": "Alice"}, "customer_id"),
+            ("send_delivery_event", {"delivery_id": 10, "status": "delivered"}, "delivery_id"),
+            ("send_purchase_order_event", {"po_id": 3, "quantity": 50}, "po_id"),
+            ("send_supplier_event", {"supplier_id": 7, "name": "Supplier X"}, "supplier_id"),
+        ],
+    )
+    def test_send_returns_true_on_success(self, mock_producer, method, data, key_field):
+        from messaging.producer import UnifiedProducer
+
+        producer = UnifiedProducer.__new__(UnifiedProducer)
+        producer.broker_urls = ["localhost:9092"]
+        producer.producer = mock_producer
+        result = getattr(producer, method)(data)
+        assert result is True
+
+    def test_send_order_returns_false_on_exception(self, mock_producer):
+        from messaging.producer import UnifiedProducer
+
+        mock_producer.send.side_effect = Exception("Kafka unreachable")
+        producer = UnifiedProducer.__new__(UnifiedProducer)
+        producer.broker_urls = ["localhost:9092"]
+        producer.producer = mock_producer
+        result = producer.send_order_event({"order_id": 99})
+        assert result is False
+
+    @pytest.mark.parametrize("amount", ["0.00", "999999.99", "1.23456789"])
+    def test_decimal_amounts_serialize_correctly(self, amount):
+        import json
+        from decimal import Decimal
+
+        from messaging.producer import DecimalEncoder
+
+        data = {"amount": Decimal(amount)}
+        serialized = json.dumps(data, cls=DecimalEncoder)
+        assert str(float(Decimal(amount))) in serialized or amount.rstrip("0").rstrip(".") in serialized
