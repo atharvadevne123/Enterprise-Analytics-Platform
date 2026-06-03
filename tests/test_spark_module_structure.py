@@ -27,13 +27,16 @@ class TestCalculateKPIsStructure:
     def test_file_parses_without_errors(self):
         assert self.tree is not None
 
-    @pytest.mark.parametrize("fn", [
-        "calculate_ecommerce_kpis",
-        "calculate_supply_chain_kpis",
-        "calculate_financial_kpis",
-        "calculate_unified_kpis",
-        "main",
-    ])
+    @pytest.mark.parametrize(
+        "fn",
+        [
+            "calculate_ecommerce_kpis",
+            "calculate_supply_chain_kpis",
+            "calculate_financial_kpis",
+            "calculate_unified_kpis",
+            "main",
+        ],
+    )
     def test_expected_function_defined(self, fn):
         assert fn in self.funcs
 
@@ -64,13 +67,16 @@ class TestLoadDimensionsStructure:
     def test_file_parses_without_errors(self):
         assert self.tree is not None
 
-    @pytest.mark.parametrize("fn", [
-        "load_products_dimension",
-        "load_customers_dimension",
-        "load_suppliers_dimension",
-        "load_date_dimension",
-        "main",
-    ])
+    @pytest.mark.parametrize(
+        "fn",
+        [
+            "load_products_dimension",
+            "load_customers_dimension",
+            "load_suppliers_dimension",
+            "load_date_dimension",
+            "main",
+        ],
+    )
     def test_expected_function_defined(self, fn):
         assert fn in self.funcs
 
@@ -96,13 +102,16 @@ class TestLoadFactsStructure:
     def test_file_parses_without_errors(self):
         assert self.tree is not None
 
-    @pytest.mark.parametrize("fn", [
-        "load_orders_fact",
-        "load_deliveries_fact",
-        "load_transactions_fact",
-        "load_budget_actuals_fact",
-        "main",
-    ])
+    @pytest.mark.parametrize(
+        "fn",
+        [
+            "load_orders_fact",
+            "load_deliveries_fact",
+            "load_transactions_fact",
+            "load_budget_actuals_fact",
+            "main",
+        ],
+    )
     def test_expected_function_defined(self, fn):
         assert fn in self.funcs
 
@@ -118,11 +127,14 @@ class TestLoadFactsStructure:
 class TestAllSparkJobsHaveDocstrings:
     """Ensure every top-level function in spark jobs has a docstring."""
 
-    @pytest.mark.parametrize("spark_file", [
-        "spark/calculate_kpis.py",
-        "spark/load_dimensions.py",
-        "spark/load_facts.py",
-    ])
+    @pytest.mark.parametrize(
+        "spark_file",
+        [
+            "spark/calculate_kpis.py",
+            "spark/load_dimensions.py",
+            "spark/load_facts.py",
+        ],
+    )
     def test_module_has_docstring(self, spark_file):
         tree = _parse(spark_file)
         assert ast.get_docstring(tree) is not None, f"{spark_file} missing module docstring"

@@ -16,6 +16,7 @@ def _make_client(rows=None):
         mock_eng.return_value.connect.return_value.__enter__ = lambda s: mock_conn
         mock_eng.return_value.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.anomaly_detection import app
+
         client = TestClient(app, raise_server_exceptions=False)
         return client, mock_conn
 
@@ -51,11 +52,14 @@ class TestAnomalyEndpointShapes:
             data = resp.json()
             assert "service" in data
 
-    @pytest.mark.parametrize("date_str", [
-        "2024-01-15",
-        "2024-06-30",
-        "2024-12-31",
-    ])
+    @pytest.mark.parametrize(
+        "date_str",
+        [
+            "2024-01-15",
+            "2024-06-30",
+            "2024-12-31",
+        ],
+    )
     def test_revenue_anomaly_various_dates(self, date_str):
         client, mock_conn = _make_client()
         mock_conn.execute.return_value.fetchone.return_value = None

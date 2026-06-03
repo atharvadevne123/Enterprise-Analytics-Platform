@@ -128,11 +128,14 @@ class TestStatisticalHelpers:
         is_anomaly, lower, upper = detect_iqr_anomaly(values, 11.0)
         assert not is_anomaly
 
-    @pytest.mark.parametrize("n_values,current,expect_anomaly", [
-        ([100] * 10, 100.0, False),
-        ([100] * 10, 200.0, True),
-        ([1, 2, 3, 4, 5], 3.0, False),
-    ])
+    @pytest.mark.parametrize(
+        "n_values,current,expect_anomaly",
+        [
+            ([100] * 10, 100.0, False),
+            ([100] * 10, 200.0, True),
+            ([1, 2, 3, 4, 5], 3.0, False),
+        ],
+    )
     def test_zscore_parametrized(self, n_values, current, expect_anomaly):
         from services.anomaly_detection import detect_statistical_anomaly
 

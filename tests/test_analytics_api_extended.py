@@ -16,6 +16,7 @@ def _make_client(rows=None):
         mock_eng.return_value.connect.return_value.__enter__ = lambda s: mock_conn
         mock_eng.return_value.connect.return_value.__exit__ = MagicMock(return_value=False)
         from services.analytics_api import app
+
         client = TestClient(app, raise_server_exceptions=False)
         return client, mock_conn
 

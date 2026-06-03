@@ -134,7 +134,12 @@ class TestSparkModuleImport:
         """calculate_kpis.py must define the four domain functions."""
         with open("spark/calculate_kpis.py") as f:
             content = f.read()
-        for func in ["calculate_ecommerce_kpis", "calculate_supply_chain_kpis", "calculate_financial_kpis", "calculate_unified_kpis"]:
+        for func in [
+            "calculate_ecommerce_kpis",
+            "calculate_supply_chain_kpis",
+            "calculate_financial_kpis",
+            "calculate_unified_kpis",
+        ]:
             assert func in content
 
     def test_load_dimensions_module_structure(self):

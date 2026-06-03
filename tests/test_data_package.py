@@ -6,32 +6,38 @@ import pytest
 
 
 class TestDataModelsImport:
-    @pytest.mark.parametrize("model_name", [
-        "Product",
-        "Customer",
-        "OrderEvent",
-        "InventoryEvent",
-        "Supplier",
-        "PurchaseOrderEvent",
-        "DeliveryEvent",
-        "GLAccount",
-        "TransactionEvent",
-        "BudgetEvent",
-        "ActualEvent",
-    ])
+    @pytest.mark.parametrize(
+        "model_name",
+        [
+            "Product",
+            "Customer",
+            "OrderEvent",
+            "InventoryEvent",
+            "Supplier",
+            "PurchaseOrderEvent",
+            "DeliveryEvent",
+            "GLAccount",
+            "TransactionEvent",
+            "BudgetEvent",
+            "ActualEvent",
+        ],
+    )
     def test_all_models_importable(self, model_name):
         import data.models as models
 
         cls = getattr(models, model_name)
         assert cls is not None
 
-    @pytest.mark.parametrize("enum_name", [
-        "OrderStatus",
-        "PaymentStatus",
-        "DeliveryStatus",
-        "TransactionType",
-        "CustomerSegment",
-    ])
+    @pytest.mark.parametrize(
+        "enum_name",
+        [
+            "OrderStatus",
+            "PaymentStatus",
+            "DeliveryStatus",
+            "TransactionType",
+            "CustomerSegment",
+        ],
+    )
     def test_all_enums_importable(self, enum_name):
         import data.models as models
 
@@ -45,14 +51,17 @@ class TestDataModelsImport:
 
 
 class TestDataModelsInheritance:
-    @pytest.mark.parametrize("model_name", [
-        "Product",
-        "Customer",
-        "OrderEvent",
-        "Supplier",
-        "GLAccount",
-        "TransactionEvent",
-    ])
+    @pytest.mark.parametrize(
+        "model_name",
+        [
+            "Product",
+            "Customer",
+            "OrderEvent",
+            "Supplier",
+            "GLAccount",
+            "TransactionEvent",
+        ],
+    )
     def test_model_inherits_base_analytics_model(self, model_name):
         import data.models as models
         from data.models import BaseAnalyticsModel

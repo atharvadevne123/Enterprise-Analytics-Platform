@@ -147,19 +147,19 @@ class TestProducerBatchSend:
         producer.broker_urls = ["localhost:9092"]
         producer.producer = mock_producer_instance
 
-        events = [
-            {"order_id": i, "amount": i * 10}
-            for i in range(1, 6)
-        ]
+        events = [{"order_id": i, "amount": i * 10} for i in range(1, 6)]
         results = [producer.send_order_event(e) for e in events]
         assert all(r is True for r in results)
         assert mock_producer_instance.send.call_count == 5
 
-    @pytest.mark.parametrize("domain,send_method,data_key", [
-        ("transaction", "send_transaction_event", "transaction_id"),
-        ("budget", "send_budget_event", "budget_id"),
-        ("actual", "send_actual_event", "actual_id"),
-    ])
+    @pytest.mark.parametrize(
+        "domain,send_method,data_key",
+        [
+            ("transaction", "send_transaction_event", "transaction_id"),
+            ("budget", "send_budget_event", "budget_id"),
+            ("actual", "send_actual_event", "actual_id"),
+        ],
+    )
     def test_financial_event_methods(self, mock_producer_instance, domain, send_method, data_key):
         from messaging.producer import UnifiedProducer
 

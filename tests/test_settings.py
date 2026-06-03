@@ -144,11 +144,14 @@ class TestSettingsThresholdDefaults:
         assert isinstance(Settings.kafka_brokers, list)
         assert len(Settings.kafka_brokers) >= 1
 
-    @pytest.mark.parametrize("env_val,expected", [
-        ("2.5", 2.5),
-        ("3.0", 3.0),
-        ("1.0", 1.0),
-    ])
+    @pytest.mark.parametrize(
+        "env_val,expected",
+        [
+            ("2.5", 2.5),
+            ("3.0", 3.0),
+            ("1.0", 1.0),
+        ],
+    )
     def test_zscore_threshold_from_env(self, env_val, expected):
         import importlib
 
@@ -158,11 +161,14 @@ class TestSettingsThresholdDefaults:
             importlib.reload(cfg)
             assert cfg.Settings.zscore_threshold == pytest.approx(expected)
 
-    @pytest.mark.parametrize("brokers,expected_count", [
-        ("localhost:9092", 1),
-        ("broker1:9092,broker2:9092", 2),
-        ("b1:9092,b2:9092,b3:9092", 3),
-    ])
+    @pytest.mark.parametrize(
+        "brokers,expected_count",
+        [
+            ("localhost:9092", 1),
+            ("broker1:9092,broker2:9092", 2),
+            ("b1:9092,b2:9092,b3:9092", 3),
+        ],
+    )
     def test_kafka_brokers_parsing(self, brokers, expected_count):
         import importlib
 

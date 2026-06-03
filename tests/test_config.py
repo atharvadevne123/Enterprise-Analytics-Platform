@@ -91,13 +91,17 @@ class TestMakeEngineHelper:
 
 
 class TestEnginePoolConfig:
-    @pytest.mark.parametrize("service_module", [
-        "services.analytics_api",
-        "services.anomaly_detection",
-        "services.forecasting_service",
-    ])
+    @pytest.mark.parametrize(
+        "service_module",
+        [
+            "services.analytics_api",
+            "services.anomaly_detection",
+            "services.forecasting_service",
+        ],
+    )
     def test_engine_created_for_service(self, service_module):
         import importlib
+
         mod = importlib.import_module(service_module)
         assert hasattr(mod, "engine")
         assert mod.engine is not None
@@ -105,12 +109,16 @@ class TestEnginePoolConfig:
     def test_analytics_engine_is_singleton(self):
         from services.analytics_api import engine as e1
         from services.analytics_api import engine as e2
+
         assert e1 is e2
 
-    @pytest.mark.parametrize("url,expected_check", [
-        ("sqlite:///./test.db", True),
-        ("sqlite+pysqlite:///:memory:", True),
-    ])
+    @pytest.mark.parametrize(
+        "url,expected_check",
+        [
+            ("sqlite:///./test.db", True),
+            ("sqlite+pysqlite:///:memory:", True),
+        ],
+    )
     def test_sqlite_urls_are_test_environments(self, url, expected_check):
         from config.settings import Settings
 

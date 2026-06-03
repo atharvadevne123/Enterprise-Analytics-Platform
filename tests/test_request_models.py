@@ -128,11 +128,14 @@ class TestDateRangeRequestModel:
         with pytest.raises(Exception):
             DateRangeRequest(start_date=date(2024, 12, 31), end_date=date(2024, 1, 1))
 
-    @pytest.mark.parametrize("start,end", [
-        ("2024-01-01", "2024-03-31"),
-        ("2023-06-01", "2023-09-30"),
-        ("2024-12-01", "2024-12-31"),
-    ])
+    @pytest.mark.parametrize(
+        "start,end",
+        [
+            ("2024-01-01", "2024-03-31"),
+            ("2023-06-01", "2023-09-30"),
+            ("2024-12-01", "2024-12-31"),
+        ],
+    )
     def test_date_range_various_valid_ranges(self, start, end):
         from datetime import date
 

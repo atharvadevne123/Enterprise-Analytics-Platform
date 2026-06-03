@@ -44,13 +44,16 @@ class TestChangelogContent:
         with open("CHANGELOG.md") as f:
             self._content = f.read()
 
-    @pytest.mark.parametrize("keyword", [
-        "Kafka",
-        "Spark",
-        "Airflow",
-        "anomaly",
-        "forecasting",
-    ])
+    @pytest.mark.parametrize(
+        "keyword",
+        [
+            "Kafka",
+            "Spark",
+            "Airflow",
+            "anomaly",
+            "forecasting",
+        ],
+    )
     def test_key_technology_mentioned(self, keyword):
         assert keyword.lower() in self._content.lower()
 

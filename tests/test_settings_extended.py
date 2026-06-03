@@ -24,6 +24,7 @@ class TestNewSettingsAttributes:
             from importlib import reload
 
             import config.settings as m
+
             reload(m)
             assert m.Settings.max_history_days == 180
 
@@ -32,6 +33,7 @@ class TestNewSettingsAttributes:
             from importlib import reload
 
             import config.settings as m
+
             reload(m)
             assert m.Settings.min_anomaly_data_points == 20
 
@@ -50,11 +52,14 @@ class TestGetKafkaTopics:
         for topic in Settings.get_kafka_topics():
             assert "." in topic, f"Topic '{topic}' missing domain prefix"
 
-    @pytest.mark.parametrize("expected_topic", [
-        "ecommerce.orders",
-        "supply_chain.deliveries",
-        "financials.transactions",
-    ])
+    @pytest.mark.parametrize(
+        "expected_topic",
+        [
+            "ecommerce.orders",
+            "supply_chain.deliveries",
+            "financials.transactions",
+        ],
+    )
     def test_expected_topics_present(self, expected_topic):
         assert expected_topic in Settings.get_kafka_topics()
 
@@ -68,14 +73,17 @@ class TestSettingsPackageImport:
 
     def test_import_from_config_package(self):
         from config import Settings as S
+
         assert S is not None
 
     def test_settings_singleton_from_package(self):
         from config import settings as s
+
         assert s is not None
 
     def test_settings_singleton_is_settings_instance(self):
         from config import Settings, settings
+
         assert isinstance(settings, Settings)
 
     def test_as_dict_includes_new_keys(self):

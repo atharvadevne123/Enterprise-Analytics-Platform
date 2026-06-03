@@ -235,10 +235,13 @@ class TestConsumerEdgeCases:
             c = MultiTopicConsumer(topics)
             assert c.topics == topics
 
-    @pytest.mark.parametrize("broker_urls,expected", [
-        (["localhost:9092"], ["localhost:9092"]),
-        (["b1:9092", "b2:9092"], ["b1:9092", "b2:9092"]),
-    ])
+    @pytest.mark.parametrize(
+        "broker_urls,expected",
+        [
+            (["localhost:9092"], ["localhost:9092"]),
+            (["b1:9092", "b2:9092"], ["b1:9092", "b2:9092"]),
+        ],
+    )
     def test_consumer_broker_urls(self, broker_urls, expected):
         with patch("messaging.consumer.KafkaConsumer"):
             from messaging.consumer import UnifiedConsumer

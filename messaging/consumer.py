@@ -54,7 +54,9 @@ class UnifiedConsumer:
 
         logger.info(f"Kafka consumer initialized for topic: {topic}")
 
-    def consume_messages(self, message_handler: Callable, timeout_ms: int = 1000, max_messages: int | None = None) -> int:
+    def consume_messages(
+        self, message_handler: Callable, timeout_ms: int = 1000, max_messages: int | None = None
+    ) -> int:
         """
         Consume messages from Kafka
 

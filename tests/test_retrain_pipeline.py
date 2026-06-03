@@ -79,10 +79,13 @@ class TestPipelineOrchestration:
             content = f.read()
         assert "PythonOperator" in content or "python_callable" in content
 
-    @pytest.mark.parametrize("required_import", [
-        "from airflow import DAG",
-        "from airflow.operators",
-    ])
+    @pytest.mark.parametrize(
+        "required_import",
+        [
+            "from airflow import DAG",
+            "from airflow.operators",
+        ],
+    )
     def test_etl_dag_required_imports(self, required_import):
         with open("airflow/dags/etl_batch_dag.py") as f:
             content = f.read()

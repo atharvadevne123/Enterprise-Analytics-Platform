@@ -36,19 +36,25 @@ class TestServicesPackageDocstring:
 class TestServicesModuleFiles:
     """Ensure every declared service module file actually exists."""
 
-    @pytest.mark.parametrize("filename", [
-        "services/analytics_api.py",
-        "services/anomaly_detection.py",
-        "services/forecasting_service.py",
-    ])
+    @pytest.mark.parametrize(
+        "filename",
+        [
+            "services/analytics_api.py",
+            "services/anomaly_detection.py",
+            "services/forecasting_service.py",
+        ],
+    )
     def test_service_file_exists(self, filename):
         assert os.path.isfile(filename)
 
-    @pytest.mark.parametrize("filename", [
-        "services/analytics_api.py",
-        "services/anomaly_detection.py",
-        "services/forecasting_service.py",
-    ])
+    @pytest.mark.parametrize(
+        "filename",
+        [
+            "services/analytics_api.py",
+            "services/anomaly_detection.py",
+            "services/forecasting_service.py",
+        ],
+    )
     def test_service_file_parseable(self, filename):
         with open(filename) as f:
             src = f.read()
@@ -58,31 +64,40 @@ class TestServicesModuleFiles:
 class TestServicesModuleHealthEndpoints:
     """Every service must define a /health route handler."""
 
-    @pytest.mark.parametrize("service_file", [
-        "services/analytics_api.py",
-        "services/anomaly_detection.py",
-        "services/forecasting_service.py",
-    ])
+    @pytest.mark.parametrize(
+        "service_file",
+        [
+            "services/analytics_api.py",
+            "services/anomaly_detection.py",
+            "services/forecasting_service.py",
+        ],
+    )
     def test_health_endpoint_defined(self, service_file):
         with open(service_file) as f:
             src = f.read()
         assert "/health" in src
 
-    @pytest.mark.parametrize("service_file", [
-        "services/analytics_api.py",
-        "services/anomaly_detection.py",
-        "services/forecasting_service.py",
-    ])
+    @pytest.mark.parametrize(
+        "service_file",
+        [
+            "services/analytics_api.py",
+            "services/anomaly_detection.py",
+            "services/forecasting_service.py",
+        ],
+    )
     def test_version_endpoint_defined(self, service_file):
         with open(service_file) as f:
             src = f.read()
         assert "/version" in src
 
-    @pytest.mark.parametrize("service_file", [
-        "services/analytics_api.py",
-        "services/anomaly_detection.py",
-        "services/forecasting_service.py",
-    ])
+    @pytest.mark.parametrize(
+        "service_file",
+        [
+            "services/analytics_api.py",
+            "services/anomaly_detection.py",
+            "services/forecasting_service.py",
+        ],
+    )
     def test_metrics_endpoint_defined(self, service_file):
         with open(service_file) as f:
             src = f.read()

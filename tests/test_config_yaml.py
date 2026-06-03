@@ -13,15 +13,18 @@ class TestConfigYamlStructure:
         with open("config/config.yaml") as f:
             self._content = f.read()
 
-    @pytest.mark.parametrize("section", [
-        "kafka",
-        "database",
-        "airflow",
-        "spark",
-        "services",
-        "monitoring",
-        "features",
-    ])
+    @pytest.mark.parametrize(
+        "section",
+        [
+            "kafka",
+            "database",
+            "airflow",
+            "spark",
+            "services",
+            "monitoring",
+            "features",
+        ],
+    )
     def test_top_level_section_present(self, section):
         assert section + ":" in self._content
 
@@ -61,11 +64,14 @@ class TestConfigYamlKafkaTopics:
         with open("config/config.yaml") as f:
             self._content = f.read()
 
-    @pytest.mark.parametrize("topic_fragment", [
-        "ecommerce.orders",
-        "supply_chain.deliveries",
-        "financials.transactions",
-    ])
+    @pytest.mark.parametrize(
+        "topic_fragment",
+        [
+            "ecommerce.orders",
+            "supply_chain.deliveries",
+            "financials.transactions",
+        ],
+    )
     def test_expected_topic_present(self, topic_fragment):
         assert topic_fragment in self._content
 
