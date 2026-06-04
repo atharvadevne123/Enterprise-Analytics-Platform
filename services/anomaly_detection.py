@@ -158,7 +158,8 @@ def detect_statistical_anomaly(
     stddev = float(np.std(values_array))
 
     if stddev == 0:
-        return False, 0.0, mean, stddev
+        is_anomaly = current_value != mean
+        return is_anomaly, float("inf") if is_anomaly else 0.0, mean, stddev
 
     z_score = (current_value - mean) / stddev
     is_anomaly = abs(z_score) > threshold_sigma

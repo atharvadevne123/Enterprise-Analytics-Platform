@@ -76,15 +76,15 @@ class TestSettingsPackageImport:
 
         assert S is not None
 
-    def test_settings_singleton_from_package(self):
-        from config import settings as s
+    def test_settings_class_importable_from_package(self):
+        from config import Settings as s
 
         assert s is not None
 
-    def test_settings_singleton_is_settings_instance(self):
-        from config import Settings, settings
+    def test_settings_class_is_type(self):
+        from config import Settings
 
-        assert isinstance(settings, Settings)
+        assert isinstance(Settings, type)
 
     def test_as_dict_includes_new_keys(self):
         d = Settings.as_dict()

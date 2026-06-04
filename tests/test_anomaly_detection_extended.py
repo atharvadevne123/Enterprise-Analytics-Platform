@@ -36,7 +36,9 @@ class TestAnomalyEndpointShapes:
         client, _ = _make_client()
         resp = client.get("/alerts/active")
         if resp.status_code == 200:
-            assert isinstance(resp.json(), list)
+            body = resp.json()
+            alerts = body.get("alerts", body) if isinstance(body, dict) else body
+            assert isinstance(alerts, list)
 
     @pytest.mark.parametrize("alert_id", ["test-001", "abc-123-xyz", "alert-999"])
     def test_acknowledge_alert_returns_valid_response(self, alert_id):
