@@ -2,7 +2,7 @@
 # (excludes pyspark, airflow, great-expectations - those are handled separately)
 
 # Core Data Processing
-pandas>=2.0,<3
+pandas>=2.3.3,<3
 numpy>=1.26,<3
 pyarrow>=21.0.0,<22
 
