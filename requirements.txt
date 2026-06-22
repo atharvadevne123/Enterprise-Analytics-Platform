@@ -25,7 +25,7 @@ httpx==0.28.1
 
 # Data Validation
 great-expectations==1.8.1
-pydantic-core==2.10.1
+pydantic-core==2.46.4
 
 # Forecasting & Analytics
 scikit-learn==1.6.1
