@@ -3,7 +3,7 @@
 
 # Core Data Processing
 pandas>=2.3.3,<3
-numpy>=1.26,<3
+numpy>=2.2.6,<3
 pyarrow>=21.0.0,<22
 
 # Database

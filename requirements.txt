@@ -1,6 +1,6 @@
 # Core Data Processing
 pandas==2.3.3
-numpy==2.0.2
+numpy==2.2.6
 pyspark==4.0.3
 pyarrow==21.0.0
 
