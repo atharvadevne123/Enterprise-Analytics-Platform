@@ -15,7 +15,7 @@ apache-airflow-providers-postgres==6.2.0
 # Database
 psycopg2-binary==2.9.12
 sqlalchemy==2.0.50
-alembic==1.16.5
+alembic==1.18.5
 
 # API & Web
 fastapi==0.139.0
